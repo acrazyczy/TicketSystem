@@ -15,5 +15,6 @@ git 会把目录分为**工作区，暂存区**两个分区。
 
 通过 `git add .`，你可以将工作区所有文件的修改提交到暂存区；通过 `git commit -m <message>` 可以将暂存区所有修改提交到分支，此时会在分支创建一个新的版本。
 ##### 分支
+为了方便起见，本次开发不使用多分支。所有工作均在 master 分支进行。故不对分支作详细介绍。
 #### 拷贝这个项目到本地
 `git clone https://github.com/acrazyczy/TicketSystem.git`
