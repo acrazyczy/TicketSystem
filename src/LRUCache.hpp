@@ -16,8 +16,8 @@ namespace sjtu
 	class LRUCache
 	{
 	private:
-		typedef std::function<valueType(locType)> freadType;
-		typedef std::function<void(locType , const valueType &)> fwriteType;
+		typedef std::function<valueType(const locType &)> freadType;
+		typedef std::function<void(const locType & , const valueType &)> fwriteType;
 
 		freadType f_read;
 		fwriteType f_write;
@@ -51,7 +51,21 @@ namespace sjtu
 
 		LRUCache &operator=(const LRUCache &) = delete;
 
-		valueType *load(locType offset)
+		void remove(const locType &offset)
+		{
+			map<locType , *CacheNode>::iterator it = table.find(offset);
+			if (it != table.end())
+			{
+				CacheNode *node = it -> second;
+				if (node -> prec) node -> prec -> succ = node -> succ;
+				else head = node -> succ;
+				if (node -> succ) node -> succ -> prec = node -> prec;
+				else tail = node -> prec;
+				delete node;
+			}
+		}
+
+		valueType *load(const locType &offset)
 		{
 			map<locType , *CacheNode>::iterator it = table.find(offset);
 			CacheNode *node;
@@ -81,7 +95,7 @@ namespace sjtu
 			return node -> value;
 		}
 
-		void dirty_page_set(locType offset) {table.find(offset) -> second -> is_dirty_page = true;}
+		void dirty_page_set(const locType &offset) {table.find(offset) -> second -> is_dirty_page = true;}
 
 		~LRUCache() {for (;head;head = tail) tail = head -> succ , delete head;}
 	};
