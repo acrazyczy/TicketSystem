@@ -25,24 +25,24 @@ private:
         locType head;
         locType offset;
     };
-    StringHasher hasher;
+    static StringHasher hasher;
     static FineManager<userType> *UserFile;
     static BpTree<StringHasher::hashType, locType> *UserBpTree;
 
 public:
-    static void init(bool &obj) {
+    static void init(bool obj = false) {
         if (obj == false) {
-            UserBpTree = new BpTree<StringHasher::hashType, locType>(std::string("UserFile.dat"));
-            UserFile new FileManager(std::string("UserFile.dat"));
+            UserBpTree = new BpTree<StringHasher::hashType, locType>(std::string("UserBpTree.dat"));
+            UserFile = new FileManager(std::string("UserFile.dat"));
         }
         else {
-            UserBpTree->init(std::string("UserFile.dat"), true);
+            UserBpTree->init(std::string("UserBpTree.dat"), true);
             UserFile->init(std::string("UserFile.dat"), true);
         }
     }
     static void add_user(int argc, std::string *argv) {
-        if (UserBpTree.empty()) {
-            auto ret = UserFile.newspace();
+        if (UserBpTree -> empty()) {
+            auto ret = UserFile -> newspace();
             userType *user = ret.first;
             user -> offset = ret.second;
             user->privilege = 10;
@@ -152,8 +152,9 @@ public:
         std::pair<locType, bool> tmp2 = UserBpTree->find(hasher(usname));
         if (tmp1.second == true && tmp2.second == true) {
             userType *cur = UserFile->read(tmp1.first);
+            int cur_privilege = cur -> privilege;bool cur_is_online = cur -> is_online;//cur may be disabled after next UserFile -> read()
             userType *user = UserFile->read(tmp2.first);
-            if ((cur->privilege > user->privilege || curname == usname) && cur->is_online == true && cur->privilege > upri) {
+            if ((cur_privilege > user->privilege || curname == usname) && cur_is_online == true && cur_privilege > upri) {
                 if (uspass != "") strcpy(user->password, uspass.c_str());
                 if (uname != "") strcpy(user->name, uname.c_str());;
                 if (umail != "") strcpy(user->mailAddr, umail.c_str());;
@@ -165,9 +166,9 @@ public:
         }
         else std::cout << -1 << std::endl;
     }
-    static unsigned long long &access_head(std::string obj1, bool obj2) {
-        userType *user = UserFile.read(UserBpTree->find(hasher(user->username)).first);
-        if (obj2 == true) UserFile.save(user->offset);
+    static unsigned long long &access_head(std::string obj1, bool obj2 = false) {
+        userType *user = UserFile -> read(UserBpTree->find(hasher(user->username)).first);
+        if (obj2 == true) UserFile -> save(user->offset);
         return &user -> head;
     }
     ~UserManager() {
@@ -175,7 +176,9 @@ public:
         delete UserBpTree;
     }
 };
-static FineManager<UserManager::userType> *UserManager::UserFile;
-static BpTree<StringHasher::hashType, locType> *UserManager::UserBpTree;
+
+FineManager<UserManager::userType> *UserManager::UserFile;
+BpTree<StringHasher::hashType, locType> *UserManager::UserBpTree;
+StringHasher UserManager::hasher;
 
 #endif //TICKET_USERMANAGER_HPP
