@@ -129,8 +129,9 @@ public:
         std::pair<locType, bool> tmp2 = UserBpTree->find(hasher(usname));
         if (tmp1.second == true && tmp2.second == true) {
             userType *cur = UserFile->read(tmp1.first);
+            int cur_privilege = cur -> privilege;bool cur_is_online = cur -> is_online;//cur may be disabled after next UserFile -> read()
             userType *user = UserFile->read(tmp2.first);
-            if ((cur->privilege > user->privilege || curname == usname) && cur->is_online == true) {
+            if ((cur_privilege > user->privilege || curname == usname) && cur_is_online == true) {
                 std::cout << user->username << " " << user->name << " " << user->mailAddr << " " << user->privilege << std::endl;
             }
             else std::cout << -1 <<std::endl;
@@ -166,7 +167,7 @@ public:
         }
         else std::cout << -1 << std::endl;
     }
-    static unsigned long long &access_head(std::string obj1, bool obj2 = false) {
+    static locType &access_head(std::string obj1, bool obj2 = false) {
         userType *user = UserFile -> read(UserBpTree->find(hasher(user->username)).first);
         if (obj2 == true) UserFile -> save(user->offset);
         return &user -> head;
