@@ -33,7 +33,7 @@ public:
     static void init(bool obj = false) {
         if (obj == false) {
             UserBpTree = new BpTree<StringHasher::hashType, locType>(std::string("UserBpTree.dat"));
-            UserFile = new FileManager(std::string("UserFile.dat"));
+            UserFile = new FileManager<userType>(std::string("UserFile.dat"));
         }
         else {
             UserBpTree->init(std::string("UserBpTree.dat"), true);
