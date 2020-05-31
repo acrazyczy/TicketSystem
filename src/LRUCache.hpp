@@ -6,25 +6,28 @@
 #define TICKETSYSTEM_LRUCACHE_HPP
 
 #include <functional>
-#include "map.h"
+#include <utility>
+#include "TypesAndHeaders.hpp"
+#include "map.hpp"
 
 namespace sjtu
 {
-	typedef unsigned long long locType;
-
 	template <class valueType>
 	class LRUCache
 	{
 	private:
-		typedef std::function<valueType(const locType &)> freadType;
-		typedef std::function<void(const locType & , const valueType &)> fwriteType;
+		std::fstream &file;
 
-		freadType f_read;
-		fwriteType f_write;
+		std::size_t block_lim , block_cnt;
 
-		std::size_t block_lim;
+		valueType f_read(const locType &offset)
+		{
+			valueType ret;
+			file.seekg(offset) , file.read(reinterpret_cast<char *> (&ret) , sizeof (valueType));
+			return ret;
+		}
 
-		map<locType , *CacheNode> table;
+		void f_write(const locType &offset , valueType &value){file.seekp(offset) , file.write(reinterpret_cast<char *> (&value) , sizeof (valueType));}
 
 		struct CacheNode
 		{
@@ -32,28 +35,30 @@ namespace sjtu
 			locType offset;
 			bool is_dirty_page;
 			CacheNode *prec , *succ;
+			LRUCache<valueType> *bel;
 
-			CacheNode(const valueType &value_ , const locType &offset_) : value(value_) , offset(offset_) , is_dirty_page(false) , prec(nullptr) , succ(nullptr)
+			CacheNode(const valueType &value_ , const locType &offset_ , LRUCache<valueType> *bel_) : value(value_) , offset(offset_) , bel(bel_) , is_dirty_page(false) , prec(nullptr) , succ(nullptr)
 			{
-				table.insert(std::pair(locType , this));
+				bel -> table.insert(std::make_pair(offset , this));
 			}
 
 			~CacheNode()
 			{
-				if (dirty_page_set) f_write(offset , value);
-				table.erase(table.find(offset));
+				if (is_dirty_page) bel -> f_write(offset , value);
+				bel -> table.erase(bel -> table.find(offset));
 			}
 		}*head , *tail;
 
+		map<locType , CacheNode*> table;
 	public:
-		LRUCache(std::size_t block_lim_ , freadType f_read_ , fwriteType f_write_) : block_lim(block_lim_) , block_cnt(0) , f_read(f_read_) , f_write(f_write_) , head(nullptr) , tail(nullptr) {}
+		LRUCache(std::size_t block_lim_ , std::fstream &file_) : block_lim(block_lim_) , block_cnt(0) , file(file_) , head(nullptr) , tail(nullptr) {}
 		LRUCache(const LRUCache &) = delete;
 
 		LRUCache &operator=(const LRUCache &) = delete;
 
 		void remove(const locType &offset)
 		{
-			map<locType , *CacheNode>::iterator it = table.find(offset);
+			typename map<locType , CacheNode*>::iterator it = table.find(offset);
 			if (it != table.end())
 			{
 				CacheNode *node = it -> second;
@@ -67,11 +72,11 @@ namespace sjtu
 
 		valueType *load(const locType &offset)
 		{
-			map<locType , *CacheNode>::iterator it = table.find(offset);
+			typename map<locType , CacheNode*>::iterator it = table.find(offset);
 			CacheNode *node;
 			if (it == table.end())
 			{
-				node = new CacheNode (f_read(offset) , offset);
+				node = new CacheNode (f_read(offset) , offset , this);
 				if (block_lim == table.size())
 				{
 					CacheNode *tmp = tail;
@@ -92,7 +97,7 @@ namespace sjtu
 					node -> prec = nullptr , node -> succ = head , head = node;
 				}
 			}
-			return node -> value;
+			return &(node -> value);
 		}
 
 		void dirty_page_set(const locType &offset) {table.find(offset) -> second -> is_dirty_page = true;}
