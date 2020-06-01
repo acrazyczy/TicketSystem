@@ -42,21 +42,23 @@ namespace sjtu
 
 		virtual void init(std::string filepath , bool is_reset = false) override
 		{
-			if (!is_reset) file.open(filepath , std::ios_base::in | std::ios_base::binary);
-			if (is_reset || !FileManager_Base<valueType>::file.is_open())
-			{
-				std::ofstream outfile(filepath , std::ios_base::out);outfile.close();
-				file.open(filepath , std::ios_base::in | std::ios_base::binary);
-			}
 			if (cache) delete cache;
 			cache = new LRUCache<valueType>(1024 , file);
+			std::ifstream infile(filepath , std::ios_base::in);
+			if (!infile.is_open() || is_reset)
+			{
+				std::ofstream outfile(filepath , std::ios_base::out | std::ios_base::binary);
+				outfile.close();
+			}
+			infile.close();
+			file.open(filepath , std::ios_base::in | std::ios_base::out | std::ios_base::binary);
 		}
 
 		virtual std::pair<valueType * , locType> newspace() override
 		{
-			file.seekp(0 , std::ios_base::end);
+			file.seekp(0 , std::ios_base::end) , file.clear();
 			valueType tmp;locType offset = file.tellp();
-			file.clear() , file.write(reinterpret_cast<char *> (&tmp) , sizeof (valueType));
+			file.write(reinterpret_cast<char *> (&tmp) , sizeof (valueType));
 			return std::make_pair(cache -> load(offset) , offset);
 		}
 
@@ -89,16 +91,17 @@ namespace sjtu
 
 		virtual void init(std::string filepath , bool is_reset = false) override
 		{
-			if (!is_reset) file.open(filepath , std::ios_base::in | std::ios_base::binary);
-			if (is_reset || !file.is_open())
-			{
-				std::ofstream outfile(filepath , std::ios_base::out);
-				dataType tmp;tmp -> nxt = sizeof (dataType);
-				outfile.seekp(0 , std::ios_base::beg) , outfile.write(reinterpret_cast<char *> (&tmp) , sizeof (dataType)) , outfile.close();
-				file.open(filepath , std::ios_base::in | std::ios_base::binary);
-			}
 			if (cache) delete cache;
-			cache = new LRUCache<valueType>(1024 , file);
+			cache = new LRUCache<dataType>(1024 , file);
+			std::ifstream infile(filepath , std::ios_base::in);
+			if (!infile.is_open() || is_reset)
+			{
+				std::ofstream outfile(filepath , std::ios_base::out | std::ios_base::binary);
+				dataType tmp(locType(sizeof (dataType)));
+				outfile.write(reinterpret_cast<char *> (&tmp) , sizeof (dataType)) , outfile.close();
+			}
+			infile.close();
+			file.open(filepath , std::ios_base::in | std::ios_base::out | std::ios_base::binary);
 		}
 
 		virtual std::pair<valueType * , locType> newspace() override
@@ -106,31 +109,30 @@ namespace sjtu
 			dataType tmp;
 			file.seekg(0 , std::ios_base::beg) , file.read(reinterpret_cast<char *>(&tmp) , sizeof (dataType));
 			locType offset = tmp.nxt;
-			file.seekp(0 , std::ios_base::end);
+			file.seekp(0 , std::ios_base::end) , file.clear();
 			if (file.tellp() == offset)
 			{
-				file.clear() , file.write(reinterpret_cast<char *> (&tmp) , sizeof (dataType));
-				tmp -> nxt = offset + (sizeof (dataType)) , file.seekp(0 , std::ios_base::beg);
 				file.write(reinterpret_cast<char *> (&tmp) , sizeof (dataType));
-				return std::make_pair(cache -> load(offset) , offset);
+				tmp.nxt = offset + (sizeof (dataType)) , file.seekp(0 , std::ios_base::beg);
+				file.write(reinterpret_cast<char *> (&tmp) , sizeof (dataType));
 			}
 			else
 			{
 				file.seekg(offset) , file.read(reinterpret_cast<char *> (&tmp) , sizeof (dataType));
-				locType offset_ = tmp -> nxt;tmp = dataType();
+				locType offset_ = tmp.nxt;tmp = dataType();
 				file.seekp(offset) , file.write(reinterpret_cast<char *> (&tmp) , sizeof (dataType));
-				tmp -> nxt = offset_ , file.seekp(0 , std::ios_base::beg) , file.write(reinterpret_cast<char *> (&tmp) , sizeof (dataType));
-				return std::make_pair(cache -> load(offset) , offset);
+				tmp.nxt = offset_ , file.seekp(0 , std::ios_base::beg) , file.write(reinterpret_cast<char *> (&tmp) , sizeof (dataType));
 			}
+			return std::make_pair(&(cache -> load(offset) -> value) , offset);
 		}
 
 		void release(const locType &offset)
 		{
 			dataType tmp;
 			cache -> remove(offset) , file.seekg(0 , std::ios_base::beg) , file.read(reinterpret_cast<char *> (&tmp) , sizeof (dataType));
-			locType offset_ = tmp -> nxt;
-			tmp -> nxt = offset , file.seekp(0 , std::ios_base::beg) , file.write(reinterpret_cast<char *> (&tmp) , sizeof (dataType));
-			tmp -> nxt = offset_ , file.seekp(offset) , file.write(reinterpret_cast<char *> (&tmp) , sizeof (dataType));
+			locType offset_ = tmp.nxt;
+			tmp.nxt = offset , file.seekp(0 , std::ios_base::beg) , file.write(reinterpret_cast<char *> (&tmp) , sizeof (dataType));
+			tmp.nxt = offset_ , file.seekp(offset) , file.write(reinterpret_cast<char *> (&tmp) , sizeof (dataType));
 		}
 
 		virtual valueType *read(const locType &offset) override {return &(cache -> load(offset) -> value);}

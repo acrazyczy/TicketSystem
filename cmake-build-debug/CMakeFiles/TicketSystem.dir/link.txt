@@ -1,1 +1,0 @@
-/usr/bin/c++    -g -g   CMakeFiles/TicketSystem.dir/src/main.cpp.o  -o TicketSystem 

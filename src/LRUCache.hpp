@@ -18,7 +18,9 @@ namespace sjtu
 	private:
 		std::fstream &file;
 
-		std::size_t block_lim , block_cnt;
+		std::size_t block_lim;
+
+		unsigned int attempt_count , miss_count;
 
 		valueType f_read(const locType &offset)
 		{
@@ -51,7 +53,7 @@ namespace sjtu
 
 		map<locType , CacheNode*> table;
 	public:
-		LRUCache(std::size_t block_lim_ , std::fstream &file_) : block_lim(block_lim_) , block_cnt(0) , file(file_) , head(nullptr) , tail(nullptr) {}
+		LRUCache(std::size_t block_lim_ , std::fstream &file_) : block_lim(block_lim_) , file(file_) , head(nullptr) , tail(nullptr) , attempt_count(0) , miss_count(0) {}
 		LRUCache(const LRUCache &) = delete;
 
 		LRUCache &operator=(const LRUCache &) = delete;
@@ -72,10 +74,12 @@ namespace sjtu
 
 		valueType *load(const locType &offset)
 		{
+			++ attempt_count;
 			typename map<locType , CacheNode*>::iterator it = table.find(offset);
 			CacheNode *node;
 			if (it == table.end())
 			{
+				++ miss_count;
 				node = new CacheNode (f_read(offset) , offset , this);
 				if (block_lim == table.size())
 				{
@@ -94,7 +98,8 @@ namespace sjtu
 				{
 					node -> prec -> succ = node -> succ;
 					if (node -> succ) node -> succ -> prec = node -> prec;
-					node -> prec = nullptr , node -> succ = head , head = node;
+					else tail = node -> prec;
+					node -> prec = nullptr , (node -> succ = head) -> prec = node , head = node;
 				}
 			}
 			return &(node -> value);
@@ -102,7 +107,13 @@ namespace sjtu
 
 		void dirty_page_set(const locType &offset) {table.find(offset) -> second -> is_dirty_page = true;}
 
-		~LRUCache() {for (;head;head = tail) tail = head -> succ , delete head;}
+		~LRUCache()
+		{
+			for (;head;head = tail) tail = head -> succ , delete head;
+			std::cerr << "Attempt count: " << attempt_count << std::endl;
+			std::cerr << "Miss count: " << miss_count << std::endl;
+			std::cerr << "Miss rate: " << static_cast<long double> (miss_count) / attempt_count * 100 << "%" << std::endl;
+		}
 	};
 }
 
