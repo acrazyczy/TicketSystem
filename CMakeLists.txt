@@ -7,6 +7,9 @@ include_directories(
 )
 set(src_dir
         src/FileManager.hpp
+        src/OrderManager.hpp
+        src/UserManager.hpp
+        src/timeType.hpp
         src/LRUCache.hpp
         src/map.hpp
         src/main.cpp

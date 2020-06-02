@@ -9,7 +9,6 @@
 
 class timeType {
 private:
-
     static constexpr int months[13] = {0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
 public:
@@ -38,7 +37,7 @@ public:
         minute = other.minute;
     }
     timeType operator+(const int &time) {
-        TimeType tmp = *this;
+        timeType tmp = *this;
         tmp.minute += time;
         while (tmp.minute >= 60) {
             tmp.minute -= 60;
@@ -53,6 +52,53 @@ public:
             }
         }
         return tmp;
+    }
+    friend std::ostream &operator<<(std::ostream &output, const timeType &obj) {
+        if (obj.month < 10) {
+            if (obj.day < 10) {
+                if (obj.hour < 10) {
+                    if (obj.minute < 10) output << '0' << obj.month << '-' << '0' << obj.day << " 0" << obj.hour << ":0" << obj.minute;
+                    else output << '0' << obj.month << '-' << '0' << obj.day << " 0" << obj.hour << ":" << obj.minute;
+                }
+                else {
+                    if (obj.minute < 10) output << '0' << obj.month << '-' << '0' << obj.day << " " << obj.hour << ":0" << obj.minute;
+                    else output << '0' << obj.month << '-' << '0' << obj.day << " " << obj.hour << ":" << obj.minute;
+                }
+            }
+            else {
+                if (obj.hour < 10) {
+                    if (obj.minute < 10) output << '0' << obj.month << '-' << obj.day << " 0" << obj.hour << ":0" << obj.minute;
+                    else output << '0' << obj.month << '-' <<  obj.day << " 0" << obj.hour << ":" << obj.minute;
+                }
+                else {
+                    if (obj.minute < 10) output << '0' << obj.month << '-' <<  obj.day << " " << obj.hour << ":0" << obj.minute;
+                    else output << '0' << obj.month << '-' <<  obj.day << " " << obj.hour << ":" << obj.minute;
+                }
+            }
+        }
+        else {
+            if (obj.day < 10) {
+                if (obj.hour < 10) {
+                    if (obj.minute < 10) output << obj.month << '-' << '0' << obj.day << " 0" << obj.hour << ":0" << obj.minute;
+                    else output << obj.month << '-' << '0' << obj.day << " 0" << obj.hour << ":" << obj.minute;
+                }
+                else {
+                    if (obj.minute < 10) output << obj.month << '-' << '0' << obj.day << " " << obj.hour << ":0" << obj.minute;
+                    else output << obj.month << '-' << '0' << obj.day << " " << obj.hour << ":" << obj.minute;
+                }
+            }
+            else {
+                if (obj.hour < 10) {
+                    if (obj.minute < 10) output << obj.month << '-' << obj.day << " 0" << obj.hour << ":0" << obj.minute;
+                    else output << obj.month << '-' <<  obj.day << " 0" << obj.hour << ":" << obj.minute;
+                }
+                else {
+                    if (obj.minute < 10) output << obj.month << '-' <<  obj.day << " " << obj.hour << ":0" << obj.minute;
+                    else output << obj.month << '-' <<  obj.day << " " << obj.hour << ":" << obj.minute;
+                }
+            }
+        }
+        return output;
     }
 };
 

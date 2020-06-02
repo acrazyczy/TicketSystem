@@ -1,22 +1,27 @@
 //
 // Created by hanchong on 2020/5/23.
 //
-namespace sjtu {
 
 #ifndef TICKET_ORDERMANAGER_HPP
 #define TICKET_ORDERMANAGER_HPP
 
+namespace sjtu {
+
 #include "FileManager.hpp"
-#include "BpTree.hpp"
+#include "BplusTree.hpp"
 #include "StringHaser.hpp"
 #include "timeType.hpp"
 #include "UserManager.hpp"
 #include "TrainManager.hpp"
+#include "TypesAndHeaders.hpp"
 #include <iostream>
 #include <cstring>
 #include <string>
 
-    enum trainstatus {success, pending, refunded};
+    enum trainstatus {
+        success, pending, refunded
+    };
+
     class orderType {
     public:
         char username[21];
@@ -28,14 +33,15 @@ namespace sjtu {
         trainstatus status;
         locType offset;
     };
+
     class OrderManager {
     private:
         StringHasher hasher;
         int pending_id = 0;
-        BpTree<std::pair<StringHasher::hashType, int>, locType> *PendingBpTree;
+        BpTree <std::pair<StringHasher::hashType, int>, locType> *PendingBpTree;
 
     public:
-        FileManager<std::pair<orderType, locType>> *OrderFile;
+        FileManager <std::pair<orderType, locType>> *OrderFile;
 
         void init(bool obj = false) {
             if (obj == false) {
@@ -47,13 +53,11 @@ namespace sjtu {
                     order->offset = ret.second;
                     order->num = 0;
                     OrderFile->save(order->offset);
-                }
-                else {
+                } else {
                     orderType *tmp = OrderFile->read(0);
                     pending_id = tmp->num;
                 }
-            }
-            else {
+            } else {
                 OrderFile->init("OrderFile.dat", true);
                 PendingBpTree->init("PendingBptree.dat", true);
                 auto ret = OrderFile.newspace();
@@ -64,10 +68,11 @@ namespace sjtu {
             }
         }
 
-        OrderManager () {
+        OrderManager() {
             init();
         }
-        void refund_ticket(UserManager *user_manager, TrainManager *train_manager,int argc, std::string *argv) {
+
+        void refund_ticket(UserManager *user_manager, TrainManager *train_manager, int argc, std::string *argv) {
             std::string uname;
             int number = 1;
             for (int i = 0; i < argc; i += 2) {
@@ -81,7 +86,8 @@ namespace sjtu {
                 bool if_ok = user_manager->refund_order(this, number, tmp);
                 if (if_ok) {
                     train_manager->refund_ticket(tmp);
-                    vector<std::pair<StringHasher::hashType, int>, locType> pendinglist = PendingBpTree->range(std::pair<hasher(tmp->trainID), 0>, std::pair<hasher(tmp->trainID), 0x7fffffff>);
+                    vector <std::pair<StringHasher::hashType, int>, locType> pendinglist = PendingBpTree->range(
+                            std::pair<hasher(tmp->trainID), 0>, std::pair<hasher(tmp->trainID), 0x7fffffff>);
                     for (int i = 0; i < pendinglist.size(); ++i) {
                         orderType *order = OrderFile->read(pendinglist[i].second);
                         if (order->status != refunded && train_manager->buy_ticket(order)) {
@@ -92,11 +98,11 @@ namespace sjtu {
                         }
                     }
                     std::cout << 0 << std::endl;
-                }
-                else std::cout << -1 << std::endl;
+                } else std::cout << -1 << std::endl;
                 delete tmp;
             }
         }
+
         void buy_ticket(UserManager *user_manager, TrainManager *train_manager, int argc, std::string *argv) {
             std::string uname, utrain, ufrom, uto;
             int unum;
@@ -125,8 +131,7 @@ namespace sjtu {
                     tmp->status = success;
                     user_manager->add_order(this, tmp);
                     std::cout << tmp->price << std::endl;
-                }
-                else if (ifpending == false) std::cout << -1 << std::endl;
+                } else if (ifpending == false) std::cout << -1 << std::endl;
                 else if (ifpending == true) {
                     tmp->status = pending;
                     user_manager->add_order(this, tmp);
@@ -136,7 +141,8 @@ namespace sjtu {
                 delete tmp;
             }
         }
-        ~OrderManager(){
+
+        ~OrderManager() {
             orderType *tmp = OrderFile->read(0);
             tmp->num = pending_id;
             OrderFile->save(0);
@@ -145,7 +151,9 @@ namespace sjtu {
         }
     };
 
+};
+
 #endif //TICKET_ORDERMANAGER_HPP
 
-}
+
 
