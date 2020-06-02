@@ -7,7 +7,7 @@
 
 namespace sjtu
 {
-	typedef unsigned long long locType;
+	typedef long locType;
 };
 
 #endif //TICKETSYSTEM_TYPESANDHEADERS_HPP
