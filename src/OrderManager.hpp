@@ -41,11 +41,11 @@ namespace sjtu {
         BpTree <std::pair<StringHasher::hashType, int>, locType> *PendingBpTree;
 
     public:
-        FileManager <std::pair<orderType, locType>> *OrderFile;
+        FileManager<std::pair<orderType, locType>> *OrderFile;
 
         void init(bool obj = false) {
             if (obj == false) {
-                OrderFile = new FileManager("OrderFile.dat");
+                OrderFile = new FileManager<std::pair<orderType, locType>>("OrderFile.dat");
                 PeningBpTree = new BpTree("PendingBptree.dat");
                 if (OrderFile->is_newfile) {
                     auto ret = OrderFile.newspace();

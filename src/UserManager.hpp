@@ -39,7 +39,7 @@ namespace sjtu {
         BpTree <StringHasher::hashType, locType> *UserBpTree;
 
     public:
-        FileManager <userType> *UserFile;
+        FileManager<userType> *UserFile;
 
         void init(bool obj = false) {
             if (obj == false) {
