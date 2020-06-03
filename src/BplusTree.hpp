@@ -77,6 +77,10 @@ namespace sjtu {
                   return;
               }*/
 
+        bool empty() {
+            return root == -1;
+        }
+
         bool equal(Key x, Key y) {
             return !Compare()(x, y) && !Compare()(y, x);
         }
