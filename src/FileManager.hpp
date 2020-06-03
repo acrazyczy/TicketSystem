@@ -35,6 +35,7 @@ namespace sjtu
 	{
 	private:
 		LRUCache<valueType> *cache;
+		bool is_newfile;
 
 		using FileManager_Base<valueType>::file;
 	public:
@@ -47,9 +48,10 @@ namespace sjtu
 			std::ifstream infile(filepath , std::ios_base::in);
 			if (!infile.is_open() || is_reset)
 			{
+				is_newfile = true;
 				std::ofstream outfile(filepath , std::ios_base::out | std::ios_base::binary);
 				outfile.close();
-			}
+			}else is_newfile = false;
 			infile.close();
 			file.open(filepath , std::ios_base::in | std::ios_base::out | std::ios_base::binary);
 		}
@@ -84,6 +86,7 @@ namespace sjtu
 		};
 
 		LRUCache<dataType> *cache;
+		bool is_newfile;
 
 		using FileManager_Base<valueType>::file;
 	public:
@@ -96,10 +99,11 @@ namespace sjtu
 			std::ifstream infile(filepath , std::ios_base::in);
 			if (!infile.is_open() || is_reset)
 			{
+				is_newfile = true;
 				std::ofstream outfile(filepath , std::ios_base::out | std::ios_base::binary);
 				dataType tmp(locType(sizeof (dataType)));
 				outfile.write(reinterpret_cast<char *> (&tmp) , sizeof (dataType)) , outfile.close();
-			}
+			}else is_newfile = false;
 			infile.close();
 			file.open(filepath , std::ios_base::in | std::ios_base::out | std::ios_base::binary);
 		}
