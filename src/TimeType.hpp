@@ -21,9 +21,16 @@ namespace sjtu {
             month = day = hour = minute = 0;
         }
         timeType(std::string d) {
-            month = (d[0] - '0') * 10 + (d[1] - '0');
-            day = (d[3] - '0') * 10 + (d[4] - '0');
-            hour = minute = 0;
+            if (d[2] == '-') {
+                month = (d[0] - '0') * 10 + (d[1] - '0');
+                day = (d[3] - '0') * 10 + (d[4] - '0');
+                hour = minute = 0;
+            }
+            else if (d[2] == ':') {
+                hour = (d[0] - '0') * 10 + (d[1] - '0');
+                minute = (d[3] - '0') * 10 + (d[4] - '0');
+                month = day = 0;
+            }
         }
         timeType(int m, int d, int h, int min) {
             month = m;
