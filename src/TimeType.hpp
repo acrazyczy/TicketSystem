@@ -61,6 +61,16 @@ namespace sjtu {
             }
             return tmp;
         }
+        static int dateminus(const timeType &lhs, const timeType &rhs) {
+            int tmp1 = 0, tmp2 = 0;
+            for (int i = 1; i <= lhs.month; ++i)
+                tmp1 += lhs.months[i];
+            tmp1 += lhs.day;
+            for (int i = 1; i <= rhs.month; ++i)
+                tmp2 += rhs.months[i];
+            tmp2 += rhs.day;
+            return (tmp1 - tmp2);
+        }
         friend std::ostream &operator<<(std::ostream &output, const timeType &obj) {
             if (obj.month < 10) {
                 if (obj.day < 10) {
