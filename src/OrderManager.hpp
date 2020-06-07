@@ -5,7 +5,6 @@
 #ifndef TICKET_ORDERMANAGER_HPP
 #define TICKET_ORDERMANAGER_HPP
 
-namespace sjtu {
 
 #include "FileManager.hpp"
 #include "BplusTree.hpp"
@@ -17,6 +16,8 @@ namespace sjtu {
 #include <iostream>
 #include <cstring>
 #include <string>
+
+namespace sjtu {
 
     enum orderstatus {
         success, pending, refunded

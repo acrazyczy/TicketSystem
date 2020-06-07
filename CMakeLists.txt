@@ -14,5 +14,5 @@ set(src_dir
         src/map.hpp
         src/main.cpp
         src/TypesAndHeaders.hpp
-        src/TrainManager.hpp)
+        src/TrainManager.hpp src/TicketSystem.cpp)
 add_executable(TicketSystem ${src_dir})
