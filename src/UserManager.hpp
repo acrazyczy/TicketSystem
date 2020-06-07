@@ -16,7 +16,7 @@ namespace sjtu {
 #include <cstring>
 #include <string>
 
-    enum trainstatus {
+    enum orderstatus {
         success, pending, refunded
     };
 

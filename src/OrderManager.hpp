@@ -18,7 +18,7 @@ namespace sjtu {
 #include <cstring>
 #include <string>
 
-    enum trainstatus {
+    enum orderstatus {
         success, pending, refunded
     };
 
@@ -30,7 +30,7 @@ namespace sjtu {
         char station[2][41];
         int num;
         int price;
-        trainstatus status;
+        orderstatus status;
         locType offset;
     };
 
@@ -127,16 +127,21 @@ namespace sjtu {
                 strcpy(tmp->station[0], ufrom.c_str());
                 strcpy(tmp->station[1], uto.c_str());
                 tmp->date[0] = uday;
-                if (train_manager->buy->ticket(tmp) == true) {
-                    tmp->status = success;
-                    user_manager->add_order(this, tmp);
-                    std::cout << tmp->price << std::endl;
-                } else if (ifpending == false) std::cout << -1 << std::endl;
-                else if (ifpending == true) {
-                    tmp->status = pending;
-                    user_manager->add_order(this, tmp);
-                    PendingBpTree->insert(std::pair<hasher(order->trainID), pending_id>, order->offset);
-                    std::cout << "queue" << std::endl;
+                if (train_manager->buy_ticket(tmp) == false) std::cout << -1 << std::endl;
+                else {
+                    if (tmp->status == success) {
+                        user_manager->add_order(this, tmp);
+                        std::cout << tmp->price << std::endl;
+                    }
+                    else {
+                        if (ifpending == false) std::cout << -1 << std::endl;
+                        else {
+                            tmp->status = pending;
+                            user_manager->add_order(this, tmp);
+                            PendingBpTree->insert(std::pair<hasher(order->trainID), pending_id>, order->offset);
+                            std::cout << "queue" << std::endl;
+                        }
+                    }
                 }
                 delete tmp;
             }
