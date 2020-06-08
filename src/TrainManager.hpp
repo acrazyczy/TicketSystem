@@ -14,6 +14,9 @@
 
 namespace sjtu
 {
+	const int max_train_num = 16384;
+	const int W = 32;
+
 	struct stationType
 	{
 		char stationName[41];
@@ -34,7 +37,7 @@ namespace sjtu
 		void display_single(int day_id , const timeType &date , int start , int end)
 		{
 			timeType current_time = startTime;
-			startTime.month = data.month , startTime.day = date.month;
+			current_time.month = data.month , current_time.day = date.month;
 			int price_sum = 0;
 			for (int i = 0;i < end;++ i)
 			{
@@ -70,6 +73,15 @@ namespace sjtu
 
 		int get_Delta_date(std::string stationName)
 		{
+			timeType current_time = startTime;
+			current_time.month = 1 , current_time.day = 1;
+			for (int i = 0;i < stationNum;++ i)
+			{
+				if (i) current_time = current_time + stations[i].duration;
+				if (stationName == std::string(stations[i].stationName)) break;
+				current_time = current_time + stations[i].stopoverTime;
+			}
+			return 1 - current_time.day;
 		}
 	};
 
@@ -98,7 +110,8 @@ namespace sjtu
 			}
 			if (TrainFile -> is_newfile)
 			{
-				//to do : bitset init
+				std::ofstream outfile("Bitset.dat" , std::ios_base::out | std::ios_base::binary);
+				outfile.close();
 			}
 		}
 
@@ -134,7 +147,9 @@ namespace sjtu
 				{
 					for (r = l;r < len && stations[r] != '|';++ r);
 					strcpy(train -> stations[i].stationName , stations.substr(l , r - l).c_str());
-					//to do : Station Record
+					auto ret = StationBpTree -> find(hasher(train -> stations[i].stationName));
+					if (ret.second) bitset_set(ret.first , train -> offset / sizeof (DynamicFileManager<trainType>::dataType) - 1);
+					else StationBpTree -> insert(std::make_pair(hasher(train -> stations[i].station) , bitset_newblock(train -> offset / sizeof (DynamicFileManager<trainType>::dataType) - 1)));
 				}
 				for (int i = 1 , l = 0 , r , len = prices.size();i < train -> stationNum;++ i , l = r + 1)
 				{
@@ -157,7 +172,6 @@ namespace sjtu
 				TrainFile -> save(train -> offset) , TrainBpTree -> insert(std::make_pair<hasher(train -> trainID) , train -> offset>);
 				std::cout << 0 << std::endl;
 			}
-			//to do : bitset add
 		}
 
 		void query_ticket();
