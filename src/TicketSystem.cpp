@@ -59,4 +59,5 @@ int main()
             delete order_manager;
         }
     }
+    return 0;
 }

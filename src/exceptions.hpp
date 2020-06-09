@@ -51,6 +51,14 @@ public:
 	    wro = "container_is_empty";
 	}
 };
+
+class invalid_command : public exception {
+public:
+	std::string wro;
+	invalid_command() {
+	    wro = "invalid_command";
+	}
+};
 }
 
 #endif

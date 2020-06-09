@@ -35,10 +35,13 @@ namespace sjtu
 	{
 	private:
 		LRUCache<valueType> *cache;
-		bool is_newfile;
 
 		using FileManager_Base<valueType>::file;
 	public:
+		typedef valueType blockType;
+
+		bool is_newfile;
+
 		FileManager(std::string filepath) {cache = nullptr , init(filepath);}
 
 		virtual void init(std::string filepath , bool is_reset = false) override
@@ -86,10 +89,13 @@ namespace sjtu
 		};
 
 		LRUCache<dataType> *cache;
-		bool is_newfile;
 
 		using FileManager_Base<valueType>::file;
 	public:
+		typedef dataType blockType;
+
+		bool is_newfile;
+
 		DynamicFileManager(std::string filepath) {cache = nullptr , init(filepath);}
 
 		virtual void init(std::string filepath , bool is_reset = false) override
