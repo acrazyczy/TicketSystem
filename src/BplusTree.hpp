@@ -17,13 +17,14 @@ namespace sjtu {
     class BplusTree {
         typedef std::pair<const Key, T> value_type;
     public:
-        int depth;
+        int depth,siz;
         locType root;
 
         struct node {
             union {
                 T val[degree - 1];
                 locType pointer[degree];
+                int dep_and_siz[2];
             };
             locType nxt;
             Key keyvalue[degree - 1];
@@ -80,37 +81,39 @@ namespace sjtu {
         bool empty() {
             return root == -1;
         }
-
+        int size(){
+            return siz;
+        }
         bool equal(Key x, Key y) {
             return !Compare()(x, y) && !Compare()(y, x);
         }
 
-        void writeroot(locType _root) {
+        void putintocache() {
             node *x = file->read(sizeof(DynamicFileManager<node>::blockType));
-            x->nxt = _root;
+            x->nxt = root;x->dep_and_siz[0]=depth;x->dep_and_siz[1]=siz;
             file->save(sizeof(DynamicFileManager<node>::blockType));
         }
 
-        locType readroot() {
-            return file->read(sizeof(DynamicFileManager<node>::blockType))->nxt;
+        void getfromcache() {
+            node *x=file->read(sizeof(DynamicFileManager<node>::blockType));
+            root=x->nxt,depth=x->dep_and_siz[0],siz=x->dep_and_siz[1];
         }
 
         BplusTree(std::string str, bool is_reset = false) {
-            depth = 0;
             if (is_reset) {
                 file->init(str, true);
-                root = -1;
+                root = -1,depth = 0,siz=0;
             } else {
                 file = new DynamicFileManager<node>(str);
                 if (file->is_newfile)
-                    root = -1;
+                    root = -1,depth=0,siz=0;
                 else
-                    root = readroot();
+                    getfromcache();
             }
         }
 
         ~BplusTree() {
-            writeroot(root);
+            putintocache();
         }
 
         std::pair<T, bool> find(const Key &key) {
@@ -218,6 +221,7 @@ namespace sjtu {
                 x->val[0] = vt;
                 x->nxt = -1;
                 file->save(root);
+                siz=1;
                 return 1;
             }
             locType *pos;
@@ -280,6 +284,7 @@ namespace sjtu {
             delete[]p;
             delete[]pp;
             delete[]pos;
+            ++siz;
             return 1;
         }
 
@@ -395,6 +400,7 @@ namespace sjtu {
                 delete[]p;
                 delete[]pp;
                 delete[]pos;
+                --siz;
                 return 1;
             }
             if (x->sz >= degree >> 1) {
@@ -402,6 +408,7 @@ namespace sjtu {
                 delete[]p;
                 delete[]pp;
                 delete[]pos;
+                --siz;
                 return 1;
             }
             if (pp[depth - 2] == p[depth - 2]->sz) {
@@ -446,6 +453,7 @@ namespace sjtu {
             delete[]p;
             delete[]pp;
             delete[]pos;
+            --siz;
             return 1;
         }
     };
