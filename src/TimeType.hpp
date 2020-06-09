@@ -71,6 +71,24 @@ namespace sjtu {
             tmp2 += rhs.day;
             return (tmp1 - tmp2);
         }
+        bool operator<(const timeType &other) {
+            int tmp1 = 0, tmp2 = 0;
+            for (int i = 1; i <= month; ++i)
+                tmp1 += months[i];
+            tmp1 += day;
+            tmp1 *= 24;
+            tmp1 += hour;
+            tmp1 *= 60;
+            tmp1 += minute;
+            for (int i = 1; i <= other.month; ++i)
+                tmp2 += other.months[i];
+            tmp2 += other.day;
+            tmp2 *= 24;
+            tmp2 += other.hour;
+            tmp2 *= 60;
+            tmp2 += other.minute;
+            return (tmp1 < tmp2);
+        }
         friend std::ostream &operator<<(std::ostream &output, const timeType &obj) {
             if (obj.month < 10) {
                 if (obj.day < 10) {
