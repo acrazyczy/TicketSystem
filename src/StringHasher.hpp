@@ -5,8 +5,7 @@
 #ifndef TICKETSYSTEM_STRINGHASHER_HPP
 #define TICKETSYSTEM_STRINGHASHER_HPP
 
-#include <cstring>
-#include <string>
+#include "TypesAndHeaders.hpp"
 
 namespace sjtu
 {

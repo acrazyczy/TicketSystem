@@ -5,7 +5,7 @@
 #ifndef TICKET_TIMETYPE_HPP
 #define TICKET_TIMETYPE_HPP
 
-#include <iostream>
+#include "TypesAndHeaders.hpp"
 
 namespace sjtu {
     class timeType {
@@ -45,13 +45,12 @@ namespace sjtu {
             minute = other.minute;
         }
         timeType operator+(const int &time) {
-            if (time >= 0)
-            {
-                minute += time , hour += minute / 60 , minute %= 60;
-                int day_add = hour / 24;hour %= 24;
-                for (;day_add + day > months[month];++ month) day_add -= months[month] - day + 1 , day = 1;
-                day += day_add;
-            }
+        	timeType ret;
+                ret.minute = minute + time , ret.hour = ret.hour + minute / 60 , ret.minute %= 60;
+                int day_add = hour / 24;ret.hour %= 24;
+                for (ret.day = day , ret.month = month;day_add + ret.day > months[ret.month];++ ret.month) day_add -= months[ret.month] - ret.day + 1 , ret.day = 1;
+                ret.day += day_add;
+        	return ret;
         }
         static int dateminus(const timeType &lhs, const timeType &rhs) {
             int tmp1 = 0, tmp2 = 0;

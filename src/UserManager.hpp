@@ -12,9 +12,6 @@
 #include "BplusTree.hpp"
 #include "StringHaser.hpp"
 #include "TypesAndHeaders.hpp"
-#include <iostream>
-#include <cstring>
-#include <string>
 
 namespace sjtu {
     enum orderstatus {

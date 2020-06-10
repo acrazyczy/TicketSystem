@@ -5,11 +5,7 @@
 #ifndef TICKETSYSTEM_FILEMANAGER_HPP
 #define TICKETSYSTEM_FILEMANAGER_HPP
 
-#include <iostream>
-#include <fstream>
-#include <iomanip>
-#include <cstring>
-#include <string>
+#include "TypesAndHeaders.hpp"
 #include "LRUCache.hpp"
 
 namespace sjtu

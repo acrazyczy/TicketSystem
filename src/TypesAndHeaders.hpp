@@ -5,6 +5,16 @@
 #ifndef TICKETSYSTEM_TYPESANDHEADERS_HPP
 #define TICKETSYSTEM_TYPESANDHEADERS_HPP
 
+#include <functional>
+#include <algorithm>
+#include <iostream>
+#include <fstream>
+#include <iomanip>
+#include <cstring>
+#include <utility>
+#include <string>
+#include <cstdio>
+
 namespace sjtu
 {
 	typedef long locType;

@@ -1,10 +1,6 @@
 #ifndef BplusTree_HPP
 #define BplusTree_HPP
-#include<cstdio>
-#include<iostream>
-#include<cstring>
-#include<fstream>
-#include<vector>
+#include "TypesAndHeaders.hpp"
 #include "FileManager.hpp"
 #include "vector.hpp"
 namespace sjtu {
@@ -137,7 +133,7 @@ namespace sjtu {
         }
 
         vector<value_type> range_query(const Key &keyl, const Key &keyr) {
-            std::vector<value_type> ret;
+            vector<value_type> ret;
             if (!depth)return ret;
             locType pos = root;
             node *x;

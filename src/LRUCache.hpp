@@ -5,8 +5,6 @@
 #ifndef TICKETSYSTEM_LRUCACHE_HPP
 #define TICKETSYSTEM_LRUCACHE_HPP
 
-#include <functional>
-#include <utility>
 #include "TypesAndHeaders.hpp"
 #include "map.hpp"
 

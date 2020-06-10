@@ -9,9 +9,6 @@
 #include "FileManager.hpp"
 #include "OrderManager.hpp"
 #include "BplusTree.hpp"
-#include <algorithm>
-#include <cstring>
-#include <string>
 
 namespace sjtu
 {

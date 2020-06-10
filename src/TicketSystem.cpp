@@ -5,9 +5,7 @@
 #include "UserManager.hpp"
 #include "TrainManager.hpp"
 #include "OrderManager.hpp"
-#include <iostream>
-#include <cstring>
-#include <string>
+#include "TypesAndHeaders.hpp"
 
 int main()
 {
