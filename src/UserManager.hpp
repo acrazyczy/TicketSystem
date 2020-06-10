@@ -28,7 +28,7 @@ namespace sjtu {
         char name[21];
         char mailAddr[31];
         int privilege;
-        bool is_online = false;
+        unsigned int is_online;
         locType head = -1;
         locType offset;
         int order_count = 0;
@@ -42,6 +42,8 @@ namespace sjtu {
     public:
         FileManager<userType> *UserFile;
 
+        unsigned int online_flag;
+
         void init(bool obj = false) {
             if (obj == false) {
                 UserBpTree = new BpTree<StringHasher::hashType, locType>(std::string("UserBpTree.dat"));
@@ -50,6 +52,19 @@ namespace sjtu {
                 UserBpTree->init(std::string("UserBpTree.dat"), true);
                 UserFile->init(std::string("UserFile.dat"), true);
             }
+            if (UserFile -> is_newfile)
+            {
+            	std::ofstream outfile("OnlineFlag.dat" , std::ios_base::out | std::ios_base::binary);
+            	online_flag = 0 , outfile.write(reinterpret_cast<char *>(&online_flag) , sizeof (unsigned int));
+            	outfile.close();
+            }
+            else
+            {
+            	std::ifstream infile("OnlineFlag.dat" , std::ios_base::in);
+            	infile.read(reinterpret_cast<char *>(&online_flag) , sizeof (unsigned int));
+            	infile.close();
+            }
+            ++ online_flag;
         }
 
         UserManager() {
@@ -68,7 +83,7 @@ namespace sjtu {
                     else if (argv[i] == "-n") strcpy(user->name, argv[i + 1].c_str());
                     else if (argv[i] == "-m") strcpy(user->mailAddr, argv[i + 1].c_str());
                 }
-                user->is_online = false;
+                user->is_online = 0;
                 UserFile->save(user->offset);
                 UserBpTree->insert(Bptree::value_type(hasher(user->username), user->offset));
                 std::cout << 0 << std::endl;
@@ -94,7 +109,7 @@ namespace sjtu {
                     strcpy(user->name, uname.c_str());
                     strcpy(user->mailAddr, umail.c_str());
                     user->privilege = upri;
-                    user->is_online = false;
+                    user->is_online = 0;
                     UserFile->save(user->offset);
                     UserBpTree->insert(Bptree::value_type(hasher(user->username), user->offset));
                     std::cout << 0 << std::endl;
@@ -111,8 +126,8 @@ namespace sjtu {
             std::pair<locType, bool> tmp = UserBpTree->find(hasher(usname));
             if (tmp.second == true) {
                 userType *user = UserFile->read(tmp.first);
-                if (uspass == user->password && user->is_online == false) {
-                    user->is_online = true;
+                if (uspass == user->password && user->is_online != online_flag) {
+                    user->is_online = online_flag;
                     UserFile->save(user->offset);
                     std::cout << 0 << std::endl;
                 } else std::cout << -1 << std::endl;
@@ -123,8 +138,8 @@ namespace sjtu {
             std::pair<locType, bool> tmp = UserBpTree->find(hasher(argv[1]));
             if (tmp.second == true) {
                 userType *user = UserFile->read(tmp.first);
-                if (user->is_online == true) {
-                    user->is_online = false;
+                if (user->is_online == online_flag) {
+                    user->is_online = 0;
                     UserFile->save(user->offset);
                     std::cout << 0 << std::endl;
                 } else std::cout << -1 << std::endl;
@@ -143,7 +158,7 @@ namespace sjtu {
             if (tmp1.second == true && tmp2.second == true) {
                 userType *cur = UserFile->read(tmp1.first);
                 int cur_privilege = cur->privilege;
-                bool cur_is_online = cur->is_online;//cur may be disabled after next UserFile -> read()
+                bool cur_is_online = cur->is_online == online_flag;
                 userType *user = UserFile->read(tmp2.first);
                 if ((cur_privilege > user->privilege || curname == usname) && cur_is_online == true) {
                     std::cout << user->username << " " << user->name << " " << user->mailAddr << " " << user->privilege
@@ -168,7 +183,7 @@ namespace sjtu {
             if (tmp1.second == true && tmp2.second == true) {
                 userType *cur = UserFile->read(tmp1.first);
                 int cur_privilege = cur->privilege;
-                bool cur_is_online = cur->is_online;//cur may be disabled after next UserFile -> read()
+                bool cur_is_online = cur->is_online == online_flag;
                 userType *user = UserFile->read(tmp2.first);
                 if ((cur_privilege > user->privilege || curname == usname) && cur_is_online == true &&
                     cur_privilege > upri) {
@@ -187,7 +202,7 @@ namespace sjtu {
             if (tmp.second == false) return false;
             else {
                 userType *cur = UserFile->read(tmp.first);
-                return cur->is_online;
+                return cur->is_online == online_flag;
             }
         }
         void add_order(OrderManager *order_manager, orderType *order) {
@@ -225,7 +240,7 @@ namespace sjtu {
             if (tmp.second == false) std::cout << -1 << std::endl;
             else {
                 userType *cur = UserFile->read(tmp.first);
-                if (!cur->is_online) std::cout << -1 << std::endl;
+                if (cur->is_online != online_flag) std::cout << -1 << std::endl;
                 else {
                     std::cout << cur->order_count << std::endl;
                     locType tmpticket = cur->head;
@@ -241,6 +256,9 @@ namespace sjtu {
         ~UserManager() {
             delete UserFile;
             delete UserBpTree;
+            	std::ofstream outfile("OnlineFlag.dat" , std::ios_base::out | std::ios_base::binary);
+            	outfile.write(reinterpret_cast<char *>(&online_flag) , sizeof (unsigned int));
+            	outfile.close();
         }
     };
 

@@ -2,14 +2,9 @@
 // Created by hanchong on 2020/6/7.
 //
 
-#include "FileManager.hpp"
-#include "BplusTree.hpp"
-#include "StringHaser.hpp"
-#include "timeType.hpp"
 #include "UserManager.hpp"
 #include "TrainManager.hpp"
 #include "OrderManager.hpp"
-#include "TypesAndHeaders.hpp"
 #include <iostream>
 #include <cstring>
 #include <string>

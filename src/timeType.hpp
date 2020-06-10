@@ -45,21 +45,13 @@ namespace sjtu {
             minute = other.minute;
         }
         timeType operator+(const int &time) {
-            timeType tmp = *this;
-            tmp.minute += time;
-            while (tmp.minute >= 60) {
-                tmp.minute -= 60;
-                ++tmp.hour;
-                while (tmp.hour >= 24) {
-                    tmp.hour -= 24;
-                    ++tmp.day;
-                    while (tmp.day >= months[tmp.month]) {
-                        tmp.day -= months[tmp.month];
-                        ++tmp.month;
-                    }
-                }
+            if (time >= 0)
+            {
+                minute += time , hour += minute / 60 , minute %= 60;
+                int day_add = hour / 24;hour %= 24;
+                for (;day_add + day > months[month];++ month) day_add -= months[month] - day + 1 , day = 1;
+                day += day_add;
             }
-            return tmp;
         }
         static int dateminus(const timeType &lhs, const timeType &rhs) {
             int tmp1 = 0, tmp2 = 0;
