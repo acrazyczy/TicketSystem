@@ -5,7 +5,7 @@
 #ifndef TICKETSYSTEM_STRINGHASHER_HPP
 #define TICKETSYSTEM_STRINGHASHER_HPP
 
-#include "TypesAndHeaders.hpp"
+#include <string>
 
 namespace sjtu
 {
@@ -22,16 +22,11 @@ namespace sjtu
 		hashType operator()(const std::string str)
 		{
 			int ret0 = 0 , ret1 = 0;
-			for (std::string::iterator it = str.begin();it != str.end();++ it)
+			for (std::string::const_iterator it = str.begin();it != str.end();++ it)
 				ret0 = (1ll * ret0 * P0 + (*it)) % MOD0 , ret1 = (1ll * ret1 * P1 + (*it)) % MOD1;
 			return static_cast<hashType>(ret0) << 32 | static_cast<hashType>(ret1);
 		}
 	};
-
-	const int StringHasher::MOD0;
-	const int StringHasher::MOD1;
-	const int StringHasher::P0;
-	const int StringHasher::P1;
 }
 
 #endif //TICKETSYSTEM_STRINGHASHER_HPP

@@ -11,8 +11,8 @@ namespace sjtu {
             class Compare = std::less<Key>
     >
     class BplusTree {
-        typedef std::pair<const Key, T> value_type;
     public:
+	    typedef std::pair<const Key, T> value_type;
         int depth,siz;
         locType root;
 
@@ -85,17 +85,18 @@ namespace sjtu {
         }
 
         void putintocache() {
-            node *x = file->read(sizeof(DynamicFileManager<node>::blockType));
+            node *x = file->read(sizeof(typename DynamicFileManager<node>::valueType));
             x->nxt = root;x->dep_and_siz[0]=depth;x->dep_and_siz[1]=siz;
-            file->save(sizeof(DynamicFileManager<node>::blockType));
+            file->save(sizeof(typename DynamicFileManager<node>::valueType));
         }
 
         void getfromcache() {
-            node *x=file->read(sizeof(DynamicFileManager<node>::blockType));
+            node *x=file->read(sizeof(typename DynamicFileManager<node>::valueType));
             root=x->nxt,depth=x->dep_and_siz[0],siz=x->dep_and_siz[1];
         }
 
-        BplusTree(std::string str, bool is_reset = false) {
+        void init(std::string str , bool is_reset = false)
+        {
             if (is_reset) {
                 file->init(str, true);
                 root = -1,depth = 0,siz=0;
@@ -106,6 +107,10 @@ namespace sjtu {
                 else
                     getfromcache();
             }
+        }
+
+        BplusTree(std::string str) {
+            init(str);
         }
 
         ~BplusTree() {

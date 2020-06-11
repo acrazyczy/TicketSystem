@@ -7,7 +7,6 @@
 
 #include "TypesAndHeaders.hpp"
 #include "FileManager.hpp"
-#include "OrderManager.hpp"
 #include "BplusTree.hpp"
 
 namespace sjtu
@@ -15,6 +14,8 @@ namespace sjtu
 	const int max_train_num = 16384;
 	const int W = 32;
 	const int WS = max_train_num / W;
+
+	class orderType;
 
 	struct recordType
 	{
@@ -24,12 +25,19 @@ namespace sjtu
 
 		friend std::ostream &operator<<(std::ostream &os , const recordType &rec)
 		{
-			os << rec.trainID << " " << rec.station[0] << " " << rec.time[0] << " " << rec.station[1] << " " << rec.time[1] << " " << price << " " << seat;
+			os << rec.trainID << " " << rec.station[0] << " " << rec.time[0] << " " << rec.station[1] << " " << rec.time[1] << " " << rec.price << " " << rec.seat;
 		}
 	};
 
-	bool cmp_cost(const recordType &lhs , const recordType &rhs) {return lhs.price < rhs.price;}
-	bool cmp_time(const recordType &lhs , const recordType &rhs) {return lhs.duration < rhs.duration;}
+	struct cmp_cost
+	{
+		bool operator()(const recordType &lhs , const recordType &rhs) const {return lhs.price < rhs.price || lhs.price == rhs.price && lhs.trainID < rhs.trainID;}
+	};
+
+	struct cmp_time
+	{
+		bool operator()(const recordType &lhs , const recordType &rhs) const {return lhs.duration < rhs.duration || lhs.duration == rhs.duration && lhs.trainID < rhs.trainID;}
+	};
 
 	struct stationType
 	{
@@ -51,7 +59,7 @@ namespace sjtu
 		void display_single(int day_id , const timeType &date , int start , int end)
 		{
 			timeType current_time = startTime;
-			current_time.month = data.month , current_time.day = date.month;
+			current_time.month = date.month , current_time.day = date.month;
 			int price_sum = 0;
 			for (int i = 0;i < end;++ i)
 			{
@@ -108,7 +116,7 @@ namespace sjtu
 				if (i) actual_time = actual_time + stations[i].travelTime;
 				if (found)
 				{
-					record -> seat = record -> seat < stations[i].seatNum ? record -> seat : stations[i].seatNum[day_id];
+					record -> seat = record -> seat < stations[i].seatNum[day_id] ? record -> seat : stations[i].seatNum[day_id];
 					record -> price += stations[i].price , record -> duration += stations[i].travelTime;
 					if (stations[i].stationName == record -> station[1])
 					{
@@ -124,7 +132,7 @@ namespace sjtu
 					record -> price = 0 , record -> duration = 0 , record -> seat = 100000;
 					actual_time.month = record -> time[0].month , actual_time.day = record -> time[0].day;
 					if (actual_time < record -> time[0]) actual_time = actual_time + 24 * 60;
-					day_id = timeType::dateminus(date , saleDate[0]) + get_Delta_date(record -> station[0]);
+					day_id = timeType::dateminus(actual_time , saleDate[0]) + get_Delta_date(record -> station[0]);
 					if (day_id < 0 || day_id > timeType::dateminus(saleDate[1] , saleDate[0])) break;
 					found = true;
 				}
@@ -137,8 +145,8 @@ namespace sjtu
 	class TrainManager
 	{
 	private:
-		BpTree<StringHasher::hashType , unsigned int> *StationBpTree;
-		BpTree<StringHasher::hashType , locType> *TrainBpTree;
+		BplusTree<StringHasher::hashType , unsigned int> *StationBpTree;
+		BplusTree<StringHasher::hashType , locType> *TrainBpTree;
 		StringHasher hasher;
 
 		struct stationNameType
@@ -193,8 +201,8 @@ namespace sjtu
 			}
 			else
 			{
-				StationBpTree = new BpTree<StringHasher::hashType , unsigned int> ("StationBpTree.dat");
-				TrainBpTree = new BpTree<StringHasher::hashType , locType> ("TrainBpTree.dat");
+				StationBpTree = new BplusTree<StringHasher::hashType , unsigned int> ("StationBpTree.dat");
+				TrainBpTree = new BplusTree<StringHasher::hashType , locType> ("TrainBpTree.dat");
 				TrainFile = new DynamicFileManager<trainType> ("TrainFile.dat");
 				StationFile = new FileManager<stationNameType> ("StationFile.dat");
 			}
@@ -227,7 +235,7 @@ namespace sjtu
 			{
 				auto ret = TrainFile -> newspace();
 				trainType *train = ret.first;
-				train -> offset = ret -> second , train -> is_released = false;
+				train -> offset = ret.second , train -> is_released = false;
 				strcpy(train -> trainID , trainID.c_str());
 				train -> stationNum = stoi(stationNum);
 				for (int i = 0 , seatNum_ = stoi(seatNum);i < train -> stationNum;++ i)
@@ -241,12 +249,12 @@ namespace sjtu
 				for (int i = 1 , l = 0 , r , len = prices.size();i < train -> stationNum;++ i , l = r + 1)
 				{
 					for (r = l;r < len && prices[r] != '|';++ r);
-					strcpy(train -> stations[i].price , prices.substr(l , r - l));
+					train -> stations[i].price = stoi(prices.substr(l , r - l));
 				}
 				train -> startTime = timeType(startTime);
 				for (int i = 1 , l = 0 , r , len = travelTimes.size();i < train -> stationNum;++ i , l = r + 1)
 				{
-					for (r = l;r < len && travelTime[r] != '|';++ r);
+					for (r = l;r < len && travelTimes[r] != '|';++ r);
 					train -> stations[i].travelTime = stoi(travelTimes.substr(l , r - l));
 				}
 				for (int i = 1 , l = 0 , r , len = stopoverTimes.size();i < train -> stationNum - 1;++ i)
@@ -256,7 +264,7 @@ namespace sjtu
 				}
 				train -> saleDate[0] = timeType(saleDate.substr(0 , 4)) , train -> saleDate[1] = timeType(saleDate.substr(6 , 10));
 				train -> type = type[0];
-				TrainFile -> save(train -> offset) , TrainBpTree -> insert(std::make_pair<hasher(train -> trainID) , train -> offset>);
+				TrainFile -> save(train -> offset) , TrainBpTree -> insert(std::make_pair(hasher(train -> trainID) , train -> offset));
 				std::cout << 0 << std::endl;
 			}
 		}
@@ -271,22 +279,22 @@ namespace sjtu
 				else if (argv[i] == "-p") keyword = argv[i + 1];
 				else throw invalid_command();
 			auto ret_s = StationBpTree -> find(hasher(station[0])) , ret_t = StationBpTree -> find(hasher(station[1]));
-			if (ret_s.second == false || ret_t.second == false) std::cout << -1 << std::endl;
+			if (ret_s.second == false || ret_t.second == false) std::cout << 0 << std::endl;
 			else
 			{
 				unsigned int bits[2][WS];
 				bitset_query(ret_s.first , bits[0]) , bitset_query(ret_t.first , bits[1]);
-				vector<record> records;
+				vector<recordType> records;
 				recordType *record;
 				for (int i = 0;i < WS;++ i)
 				{
 					bits[0][i] &= bits[1][i];
-					for (unsigned int w;bits[0][i];bits[0][i] ^= w;)
+					for (unsigned int w;bits[0][i];bits[0][i] ^= w)
 					{
 						w = bits[0][i] & (-bits[0][i]);
 						int id = 0;
 						for (;w;w >>= 1) ++ id;
-						trainType *train = TrainFile -> read((i * W + id + 1) * sizeof (DynamicFileManager<trainID>::dataType));
+						trainType *train = TrainFile -> read((i * W + id + 1) * sizeof (DynamicFileManager<trainType>::valueType));
 						record = new recordType , record -> trainID = train -> trainID;
 						record -> station[0] = station[0] , record -> station[1] = station[1];
 						record -> time[0] = timeType(date);
@@ -294,8 +302,8 @@ namespace sjtu
 						delete record;
 					}
 				}
-				if (keyword == "time") std::sort(records.begin() , records.end() , cmp_time);
-				else std::sort(records.begin() , records.end() , cmp_cost);
+				if (keyword == "time") std::sort(records.begin() , records.end() , cmp_time());
+				else std::sort(records.begin() , records.end() , cmp_cost());
 				std::cout << records.size() << std::endl;
 				for (auto rec : records) std::cout << rec << std::endl;
 			}
@@ -311,7 +319,7 @@ namespace sjtu
 				else if (argv[i] == "-p") keyword = argv[i + 1];
 				else throw invalid_command();
 			auto ret_s = StationBpTree -> find(hasher(station[0])) , ret_t = StationBpTree -> find(hasher(station[1]));
-			if (ret_s.second == false || ret_t.second == false) std::cout << -1 << std::endl;
+			if (ret_s.second == false || ret_t.second == false) std::cout << 0 << std::endl;
 			else
 			{
 				unsigned int bits[2][WS];
@@ -328,12 +336,12 @@ namespace sjtu
 						for (int i = 0;i < WS;++ i)
 						{
 							bits[0][i] &= bits[1][i];
-							for (unsigned int w;bits[0][i];bits[0][i] ^= w;)
+							for (unsigned int w;bits[0][i];bits[0][i] ^= w)
 							{
 								w = bits[0][i] & (-bits[0][i]);
 								int id = 0;
 								for (;w;w >>= 1) ++ id;
-								trainType *train = TrainFile -> read((i * W + id + 1) * sizeof (DynamicFileManager<trainID>::dataType));
+								trainType *train = TrainFile -> read((i * W + id + 1) * sizeof (DynamicFileManager<trainType>::valueType));
 								record = new recordType , record -> trainID = train -> trainID;
 								record -> station[0] = station[0];
 								if (trs_station_name == "")
@@ -367,12 +375,12 @@ namespace sjtu
 						for (int i = 0;i < WS;++ i)
 						{
 							bits[0][i] &= bits[1][i];
-							for (unsigned int w;bits[0][i];bits[0][i] ^= w;)
+							for (unsigned int w;bits[0][i];bits[0][i] ^= w)
 							{
 								w = bits[0][i] & (-bits[0][i]);
 								int id = 0;
 								for (;w;w >>= 1) ++ id;
-								trainType *train = TrainFile -> read((i * W + id + 1) * DynamicFileManager<trainID>::dataType);
+								trainType *train = TrainFile -> read((i * W + id + 1) * sizeof (DynamicFileManager<trainType>::valueType));
 								record = new recordType , record -> trainID = train -> trainID;
 								if (trs_station_name == "")
 								{
@@ -380,9 +388,9 @@ namespace sjtu
 									trs_station_name = std::string(stname -> name);
 								}
 								record -> station[0] = trs_station_name , record -> station[1] = station[1];
-								int flag
+								int flag;
 								if (best_filled[0] && best[0].trainID != record -> trainID) record -> time[0] = best[0].time[1] , flag = 0;
-								else (best_filled[1]) record -> time[1] = best[1].time[1] , flag = 1;
+								else if (best_filled[1]) record -> time[1] = best[1].time[1] , flag = 1;
 								else flag = -1;
 								if (~ flag && train -> getrecord(record))
 									if (!best_filled[2] || keyword == "time" && record -> time[1] < best[3].time[1] || keyword != "time" && record -> price < best[2].price)
@@ -407,15 +415,15 @@ namespace sjtu
 			else
 			{
 				trainType *train = TrainFile -> read(ret.first);
-				for (int i = 0 , train_id = train -> offset / sizeof (DynamicFileManager<trainType>::dataType) - 1;i < train -> stationNum;++ i)
+				for (int i = 0 , train_id = train -> offset / sizeof (DynamicFileManager<trainType>::valueType) - 1;i < train -> stationNum;++ i)
 				{
 					auto ret = StationBpTree -> find(hasher(train -> stations[i].stationName));
 					if (ret.second) bitset_set(ret.first , train_id);
 					else
 					{
-						StationBpTree -> insert(std::make_pair(hasher(train -> stations[i].station) , bitset_newblock(train_id)));
+						StationBpTree -> insert(std::make_pair(hasher(train -> stations[i].stationName) , bitset_newblock(train_id)));
 						auto ret_ = StationFile -> newspace();
-						strcpy(ret_.first -> name , train -> stations[i].station);
+						strcpy(ret_.first -> name , train -> stations[i].stationName);
 						StationFile -> save(ret_.second);
 					}
 				}
@@ -424,7 +432,7 @@ namespace sjtu
 			}
 		}
 
-		void query_train(int argc , string *argv)
+		void query_train(int argc , std::string *argv)
 		{
 			std::string trainID , date;
 			for (int i = 0;i < argc;i += 2)
@@ -436,7 +444,7 @@ namespace sjtu
 			else TrainFile -> read(ret.first) -> display(timeType(date));
 		}
 
-		void delete_train(int argc , string *argv)
+		void delete_train(int argc , std::string *argv)
 		{
 			std::string trainID;
 			for (int i = 0;i < argc;i += 2)
@@ -444,13 +452,13 @@ namespace sjtu
 				else throw invalid_command();
 			auto ret = TrainBpTree -> find(hasher(trainID));
 			if (ret.second == false) std::cout << -1 << std::endl;
-			else if (TrainFile -> read() -> is_released == true) std::cout << -1 << std::endl;
+			else if (TrainFile -> read(ret.first) -> is_released == true) std::cout << -1 << std::endl;
 			else
 			{
-				trainType *train = ret.first;
-				for (int i = 0 , train_id = train -> offset / sizeof (DynamicFileManager<trainType>::dataType) - 1;i < train -> stationNum;++ i)
+				trainType *train = TrainFile -> read(ret.first);
+				for (int i = 0 , train_id = train -> offset / sizeof (DynamicFileManager<trainType>::valueType) - 1;i < train -> stationNum;++ i)
 				{
-					int id = StationBpTree -> find(hasher(train -> stations[i].stationName));
+					int id = StationBpTree -> find(hasher(train -> stations[i].stationName)).first;
 					bitset_set(id , train_id , 0);
 				}
 				TrainBpTree -> erase(hasher(trainID)) , TrainFile -> release(ret.first);
@@ -458,66 +466,9 @@ namespace sjtu
 			}
 		}
 
-		bool buy_ticket(orderType *order)
-		{
-			auto ret = TrainBpTree -> find(hasher(order -> trainID));
-			if (ret.second == false)
-			{
-				order -> status = pending;
-				return 0;
-			}
-			else
-			{
-				trainType *train = TrainFile -> read(ret.first);
-				int min_ticket_num = order -> num , day_id = timeType::dateminus(order -> date[0] , train -> saleDate[0]) + train -> get_Delta_date(std::string(order -> station[0])) , single_ticket_price = 0;
-				if (day_id < 0 || day_id >= timeType::dateminus(order -> date[1] , order -> date[0]) || train -> is_released == false) return 0;
-				else
-				{
-					timeType current_time = train -> startTime;
-					current_time.month = order -> date[0].month , current_time.day = order -> date[0].day;
-					bool flag = false;
-					for (int i = 0;i < train -> stationNum;++ i)
-					{
-						if (i) current_time = current_time + train -> stations[i].travelTime;
-						if (flag) single_ticket_price += train -> stations[i].price , min_ticket_num = min_ticket_num < train -> stations[i].seatNum[day_id] ? min_ticket_num : train -> stations[i].seatNum[day_id];
-						if (std::string(train -> stations[i].stationName) == std::string(order -> station[1]))
-						{
-							order -> date[1] = current_time , order -> price = single_ticket_price * order -> num;
-							break;
-						}
-						current_time = current_time + train -> stations[i].stopoverTime;
-						if (std::string(train -> stations[i].stationName) == std::string(order -> station[0])) order -> date[0] = current_time , flag = true;
-					}
-					if (min_ticket_num == order -> num)
-					{
-						flag = false;
-						for (int i = 0;i < train -> stationNum;++ i)
-						{
-							if (flag) train -> stations[i].seatNum[day_id] -= order -> num;
-							if (std::string(train -> stations[i].stationName) == std::string(order -> station[1])) break;
-							if (std::string(train -> stations[i].stationName) == std::string(order -> station[0])) flag = true;
-						}
-						order -> status = success;
-					}
-					else order -> status = pending;
-					return 1;
-				}
-			}
-		}
+		bool buy_ticket(orderType *);
 
-		void refund_ticket(OrderType *order)
-		{
-			auto ret = TrainBpTree -> find(hasher(order -> trainID));
-			trainType *train = TrainFile -> read(ret.first);
-			int day_id = timeType::dateminus(order -> date[0] , train -> saleDate[0]) + train -> get_Delta_date(std::string(order -> station[0]));
-			bool flag = false;
-			for (int i = 0;i < train -> stationNum;++ i)
-			{
-				if (flag) train -> stations[i].seatNum[day_id] += order -> num;
-				if (std::string(train -> stations[i].stationName) == std::string(order -> station[1])) break;
-				if (std::string(train -> stations[i].stationName) == std::string(order -> station[0])) flag = true;
-			}
-		}
+		void refund_ticket(orderType *);
 
 		~TrainManager()
 		{

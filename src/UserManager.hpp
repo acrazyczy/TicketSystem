@@ -8,15 +8,14 @@
 
 
 #include "FileManager.hpp"
-#include "OrderManager.hpp"
 #include "BplusTree.hpp"
-#include "StringHaser.hpp"
+#include "StringHasher.hpp"
 #include "TypesAndHeaders.hpp"
 
 namespace sjtu {
-    enum orderstatus {
-        success, pending, refunded
-    };
+
+    class orderType;
+    class OrderManager;
 
     class userType {
     public:
@@ -34,7 +33,7 @@ namespace sjtu {
     class UserManager {
     private:
         StringHasher hasher;
-        BpTree <StringHasher::hashType, locType> *UserBpTree;
+        BplusTree <StringHasher::hashType, locType> *UserBpTree;
 
     public:
         FileManager<userType> *UserFile;
@@ -43,7 +42,7 @@ namespace sjtu {
 
         void init(bool obj = false) {
             if (obj == false) {
-                UserBpTree = new BpTree<StringHasher::hashType, locType>(std::string("UserBpTree.dat"));
+                UserBpTree = new BplusTree<StringHasher::hashType, locType>(std::string("UserBpTree.dat"));
                 UserFile = new FileManager<userType>(std::string("UserFile.dat"));
             } else {
                 UserBpTree->init(std::string("UserBpTree.dat"), true);
@@ -82,7 +81,7 @@ namespace sjtu {
                 }
                 user->is_online = 0;
                 UserFile->save(user->offset);
-                UserBpTree->insert(Bptree::value_type(hasher(user->username), user->offset));
+                UserBpTree->insert(BplusTree<StringHasher::hashType , locType>::value_type(hasher(user->username), user->offset));
                 std::cout << 0 << std::endl;
             } else {
                 std::string usname, uspass, uname, umail, current;
@@ -98,7 +97,7 @@ namespace sjtu {
                 std::pair<locType, bool> tmp = UserBpTree->find(hasher(current));
                 userType *curuser = UserFile->read(tmp.first);
                 if (curuser->privilege > upri && tmp.second == false) {
-                    auto ret = UserFile.newspace();
+                    auto ret = UserFile -> newspace();
                     userType *user = ret.first;
                     user->offset = ret.second;
                     strcpy(user->username, usname.c_str());
@@ -108,7 +107,7 @@ namespace sjtu {
                     user->privilege = upri;
                     user->is_online = 0;
                     UserFile->save(user->offset);
-                    UserBpTree->insert(Bptree::value_type(hasher(user->username), user->offset));
+                    UserBpTree->insert(BplusTree<StringHasher::hashType , locType>::value_type(hasher(user->username), user->offset));
                     std::cout << 0 << std::endl;
                 } else std::cout << -1 << std::endl;
             }
@@ -202,54 +201,13 @@ namespace sjtu {
                 return cur->is_online == online_flag;
             }
         }
-        void add_order(OrderManager *order_manager, orderType *order) {
-            auto ret = order_manager->OrderFile->newspace();          //std::pair<std::pair<*orderType , locType> , locType>
-            ret.first.first = order;
-            order->offset = ret.second;
-            std::pair<locType, bool> tmp = UserBpTree->find(hasher(order->username));
-            userType *cur = UserFile->read(tmp.first);
-            ret.first.second = cur->head;
-            cur->head = ret.second;
-            ++cur->order_count;
-            order_manager->OrderFile->save(order->offset);
-            UserFile->save(cur->offset);
-        }
-        bool refund_order(OrderManager *order_manager, int n, orderType *order) {
-            std::pair<locType, bool> tmp = UserBpTree->find(hasher(order->username));
-            userType *cur = UserFile->read(tmp.first);
-            if (cur->order_count < n) return false;
-            else {
-                locType tmpticket = cur->head;
-                --n;
-                while(n--) {
-                    auto ret = order_manager->OrderFile->read(tmpticket);   //std::pair<*orderType , locType>
-                    tmpticket = ret.second;
-                }
-                auto now = order_manager->OrderFile->read(tmpticket);
-                orderType *nowticket = now.first;
-                nowticket->status = refunded;
-                order_manager->OrderFile->save(nowticket->offset);
-            }
-        }
-        void query_order(OrderManager *order_manager, int argc, std::string *argv) {
-            std::string uname = argv[1];
-            std::pair<locType, bool> tmp = UserBpTree->find(hasher(uname));
-            if (tmp.second == false) std::cout << -1 << std::endl;
-            else {
-                userType *cur = UserFile->read(tmp.first);
-                if (cur->is_online != online_flag) std::cout << -1 << std::endl;
-                else {
-                    std::cout << cur->order_count << std::endl;
-                    locType tmpticket = cur->head;
-                    while (tmpticket != -1) {
-                        auto ret = order_manager->OrderFile->read(tmpticket);
-                        orderType *nowticket = now.first;
-                        std::cout << '[' << nowticket->status << '] ' << nowticket->trainID << ' ' << nowticket->station[0] << ' ' << nowticket->date[0] << " -> " << nowticket->station[1] << ' ' << nowticket->date[1] << ' ' << nowticket->price << ' ' << nowticket->num << std::endl;
-                        tmpticket = ret.second;
-                    }
-                }
-            }
-        }
+
+        void add_order(OrderManager * , orderType *);
+
+        bool refund_order(OrderManager *, int , orderType *);
+
+        void query_order(OrderManager *, int , std::string *);
+
         ~UserManager() {
             delete UserFile;
             delete UserBpTree;

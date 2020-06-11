@@ -5,6 +5,7 @@
 
 #include <climits>
 #include <cstddef>
+#include <iterator>
 
 namespace sjtu {
 template<typename T>
@@ -18,13 +19,13 @@ public:
                 maxSize *= 2;
                 data = (T*) (operator new (maxSize * sizeof(T)));
                 for (int i = 0; i < currentLength; ++i)
-                        data[i] = tmp[i];
+                        new (data + i) T(tmp[i]);
         for (T* p = tmp; p < tmp + currentLength; ++p)
             p->~T();
                 operator delete (tmp);
         };
         class const_iterator;
-        class iterator {
+        class iterator: public std::iterator<std::random_access_iterator_tag, T> {
         private:
                 friend const_iterator;
         public:
@@ -73,6 +74,7 @@ public:
                 T& operator*() const{
                     return *pos;
                 }
+                bool operator<(const iterator &rhs) const {return pos < rhs.pos;}
                 bool operator==(const iterator &rhs) const {
                     if (pos == rhs.pos) return true;
                     else return false;
@@ -90,11 +92,11 @@ public:
             else return true;
                 }
         };
-        class const_iterator {
+        class const_iterator: public std::iterator<std::random_access_iterator_tag, T> {
     private:
         friend iterator;
     public:
-        T *pos;
+        const T *pos;
         const vector *vec;
         const_iterator (T *obj1 = NULL, const vector *obj2 = NULL) {
             pos = obj1;
@@ -139,6 +141,7 @@ public:
         const T& operator*() const{
             return *pos;
         }
+        bool operator<(const const_iterator &rhs) const {return pos < rhs.pos;}
         bool operator==(const iterator &rhs) const {
             if (pos == rhs.pos) return true;
             else return false;
@@ -162,12 +165,10 @@ public:
         data = (T*) (operator new (maxSize * sizeof(T)));
                 currentLength = 0;
         }
-        vector(const vector &other) {
-                maxSize = other.maxSize;
-        data = (T*) (operator new (maxSize * sizeof(T)));
-                currentLength = other.currentLength;
-                for (int i = 0; i < currentLength; ++i)
-                        data[i] = other.data[i];
+        vector(const vector &other) : maxSize(other.maxSize) , currentLength(other.currentLength) {
+        	data = (T*) (operator new (maxSize * sizeof(T)));
+        	for (int i = 0; i < currentLength; ++i)
+			new (data + i) T(other.data[i]);
         }
         ~vector() {
             for (T* p = data; p < data + currentLength; ++p)

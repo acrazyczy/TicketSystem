@@ -9,10 +9,12 @@ set(src_dir
         src/FileManager.hpp
         src/OrderManager.hpp
         src/UserManager.hpp
+        src/vector.hpp
+        src/BplusTree.hpp
+        src/exceptions.hpp
         src/timeType.hpp
         src/LRUCache.hpp
         src/map.hpp
-        src/main.cpp
         src/TypesAndHeaders.hpp
-        src/TrainManager.hpp src/TicketSystem.cpp src/StringHasher.hpp)
+        src/TrainManager.hpp src/TicketSystem.cpp src/StringHasher.hpp src/UserManager.cpp src/TrainManager.cpp src/timeType.cpp)
 add_executable(TicketSystem ${src_dir})

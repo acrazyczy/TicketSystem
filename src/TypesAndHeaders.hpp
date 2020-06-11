@@ -5,6 +5,8 @@
 #ifndef TICKETSYSTEM_TYPESANDHEADERS_HPP
 #define TICKETSYSTEM_TYPESANDHEADERS_HPP
 
+#include "StringHasher.hpp"
+#include "timeType.hpp"
 #include <functional>
 #include <algorithm>
 #include <iostream>
