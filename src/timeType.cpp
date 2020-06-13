@@ -10,8 +10,8 @@ namespace sjtu
 
         timeType timeType::operator+(const int &time) {
         	timeType ret;
-                ret.minute = minute + time , ret.hour = ret.hour + minute / 60 , ret.minute %= 60;
-                int day_add = hour / 24;ret.hour %= 24;
+                ret.minute = minute + time , ret.hour = hour + ret.minute / 60 , ret.minute %= 60;
+                int day_add = ret.hour / 24;ret.hour %= 24;
                 for (ret.day = day , ret.month = month;day_add + ret.day > months[ret.month];++ ret.month) day_add -= months[ret.month] - ret.day + 1 , ret.day = 1;
                 ret.day += day_add;
         	return ret;

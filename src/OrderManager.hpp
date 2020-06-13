@@ -121,6 +121,7 @@ namespace sjtu {
                 strcpy(tmp->trainID, utrain.c_str());
                 strcpy(tmp->station[0], ufrom.c_str());
                 strcpy(tmp->station[1], uto.c_str());
+                tmp -> num = unum;
                 tmp->date[0] = uday;
                 if (train_manager->buy_ticket(tmp) == false) std::cout << -1 << std::endl;
                 else {

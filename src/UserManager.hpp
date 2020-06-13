@@ -96,7 +96,7 @@ namespace sjtu {
                 }
                 std::pair<locType, bool> tmp = UserBpTree->find(hasher(current));
                 userType *curuser = UserFile->read(tmp.first);
-                if (curuser->privilege > upri && tmp.second == false) {
+                if (curuser->privilege > upri && UserBpTree -> find(hasher(usname)).second == false) {
                     auto ret = UserFile -> newspace();
                     userType *user = ret.first;
                     user->offset = ret.second;

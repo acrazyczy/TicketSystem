@@ -262,7 +262,7 @@ namespace sjtu
 					for (r = l;r < len && stopoverTimes[r] != '|';++ r);
 					train -> stations[i].stopoverTime = stoi(stopoverTimes.substr(l , r - l));
 				}
-				train -> saleDate[0] = timeType(saleDate.substr(0 , 4)) , train -> saleDate[1] = timeType(saleDate.substr(6 , 10));
+				train -> saleDate[0] = timeType(saleDate.substr(0 , 5)) , train -> saleDate[1] = timeType(saleDate.substr(6 , 5));
 				train -> type = type[0];
 				TrainFile -> save(train -> offset) , TrainBpTree -> insert(std::make_pair(hasher(train -> trainID) , train -> offset));
 				std::cout << 0 << std::endl;
@@ -293,7 +293,7 @@ namespace sjtu
 					{
 						w = bits[0][i] & (-bits[0][i]);
 						int id = 0;
-						for (;w;w >>= 1) ++ id;
+						for (unsigned int w_ = w;w_;w_ >>= 1) ++ id;
 						trainType *train = TrainFile -> read((i * W + id + 1) * sizeof (DynamicFileManager<trainType>::valueType));
 						record = new recordType , record -> trainID = train -> trainID;
 						record -> station[0] = station[0] , record -> station[1] = station[1];
@@ -322,9 +322,9 @@ namespace sjtu
 			if (ret_s.second == false || ret_t.second == false) std::cout << 0 << std::endl;
 			else
 			{
+				int station_count = StationBpTree -> size();
 				unsigned int bits[2][WS];
 				bitset_query(ret_s.first , bits[0]);
-				int station_count = StationBpTree -> size();
 				recordType best[4];bool best_filled[4];
 				best_filled[0] = best_filled[1] = best_filled[2] = false;
 				for (int trs = 0;trs < station_count;++ trs)
@@ -340,7 +340,7 @@ namespace sjtu
 							{
 								w = bits[0][i] & (-bits[0][i]);
 								int id = 0;
-								for (;w;w >>= 1) ++ id;
+								for (unsigned int w_ = w;w_;w_ >>= 1) ++ id;
 								trainType *train = TrainFile -> read((i * W + id + 1) * sizeof (DynamicFileManager<trainType>::valueType));
 								record = new recordType , record -> trainID = train -> trainID;
 								record -> station[0] = station[0];
@@ -379,7 +379,7 @@ namespace sjtu
 							{
 								w = bits[0][i] & (-bits[0][i]);
 								int id = 0;
-								for (;w;w >>= 1) ++ id;
+								for (unsigned int w_ = w;w_;w_ >>= 1) ++ id;
 								trainType *train = TrainFile -> read((i * W + id + 1) * sizeof (DynamicFileManager<trainType>::valueType));
 								record = new recordType , record -> trainID = train -> trainID;
 								if (trs_station_name == "")
@@ -400,7 +400,7 @@ namespace sjtu
 						}
 					}
 				if (best_filled[2]) std::cout << best[2] << std::endl << best[3] << std::endl;
-				else std::cout << 0 << std::endl;			
+				else std::cout << 0 << std::endl;
 			}
 		}
 

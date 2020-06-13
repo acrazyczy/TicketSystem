@@ -23,7 +23,10 @@ namespace sjtu
 		{
 			int ret0 = 0 , ret1 = 0;
 			for (std::string::const_iterator it = str.begin();it != str.end();++ it)
-				ret0 = (1ll * ret0 * P0 + (*it)) % MOD0 , ret1 = (1ll * ret1 * P1 + (*it)) % MOD1;
+			{
+				int cur = (*it) + 256;
+				ret0 = (1ll * ret0 * P0 + cur) % MOD0 , ret1 = (1ll * ret1 * P1 + cur) % MOD1;
+			}
 			return static_cast<hashType>(ret0) << 32 | static_cast<hashType>(ret1);
 		}
 	};

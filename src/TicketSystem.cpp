@@ -9,6 +9,10 @@
 
 int main()
 {
+	std::ifstream in("data/1.in");
+	std::cin.rdbuf(in.rdbuf());
+	std::ofstream out("1.out");
+	std::cout.rdbuf(out.rdbuf());
     std::string argv[100];
     int argc = 0, l, r;
     sjtu::UserManager *user_manager;
@@ -19,13 +23,12 @@ int main()
     order_manager = new sjtu::OrderManager;
     while(1) {
         std::string tmp, ord;
-        getline(std::cin, tmp);
+        for (getline(std::cin, tmp);tmp.back() == '\r' || tmp.back() == '\n';tmp.pop_back());
         argc = 0;
         for (l = 0; l < tmp.length(); l = r + 1) {
-            for (r = l; r < tmp.length() && tmp[r] != ' '; ++r) {
-                if (l == 0) ord = std::string(tmp, l, r - l + 1);
-            }
-            if (l != 0) argv[argc++] = std::string(tmp, l, r - l + 1);
+            for (r = l; r < tmp.length() && tmp[r] != ' '; ++r);
+            if (l != 0) argv[argc++] = std::string(tmp, l, r - l);
+            else ord = std::string(tmp, l, r - l);
         }
         if(ord == "add_user") user_manager->add_user(argc, argv);
         else if (ord == "login") user_manager->login(argc, argv);
@@ -45,11 +48,14 @@ int main()
             user_manager->init(true);
             train_manager->init(true);
             order_manager->init(true);
+            std::cout << 0 << std::endl;
         }
         else if (ord == "exit") {
             delete user_manager;
             delete train_manager;
             delete order_manager;
+            std::cout << "bye" << std::endl;
+            break;
         }
     }
     return 0;
