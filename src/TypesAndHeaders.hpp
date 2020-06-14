@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <iostream>
 #include <fstream>
+#include <cassert>
 #include <iomanip>
 #include <cstring>
 #include <utility>

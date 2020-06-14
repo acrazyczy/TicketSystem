@@ -41,10 +41,10 @@ public:
                 iterator operator-(const int &n) const {
             return iterator(pos - n, vec);
                 }
-                int operator-(const iterator &rhs) const {
+                /*int operator-(const iterator &rhs) const {
                         if (vec != rhs.vec) throw invalid_iterator();
                         return (rhs.pos - pos);
-                }
+                }*/
                 iterator& operator+=(const int &n) {
             pos += n;
             return *this;
@@ -75,6 +75,7 @@ public:
                     return *pos;
                 }
                 bool operator<(const iterator &rhs) const {return pos < rhs.pos;}
+                typename std::iterator<std::random_access_iterator_tag, T>::difference_type operator-(const iterator &rhs) const {return pos - rhs.pos;}
                 bool operator==(const iterator &rhs) const {
                     if (pos == rhs.pos) return true;
                     else return false;
@@ -108,10 +109,10 @@ public:
         const_iterator operator-(const int &n) const {
             return iterator(pos - n, vec);
         }
-        int operator-(const iterator &rhs) const {
+        /*int operator-(const iterator &rhs) const {
             if (vec != rhs.vec) throw invalid_iterator();
             return (rhs - pos);
-        }
+        }*/
         const_iterator& operator+=(const int &n) {
             pos += n;
             return *this;
@@ -142,6 +143,7 @@ public:
             return *pos;
         }
         bool operator<(const const_iterator &rhs) const {return pos < rhs.pos;}
+            typename std::iterator<std::random_access_iterator_tag, T>::difference_type operator-(const const_iterator &rhs) const {return pos - rhs.pos;}
         bool operator==(const iterator &rhs) const {
             if (pos == rhs.pos) return true;
             else return false;

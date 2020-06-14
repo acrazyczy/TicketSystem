@@ -16,7 +16,7 @@
 namespace sjtu {
 
     enum orderstatus {
-        success, pending, refunded
+        success , pending, refunded
     };
 
     class orderType {
@@ -50,7 +50,7 @@ namespace sjtu {
                     ret.first -> first.num = 0;
                     OrderFile->save(ret.first -> first.offset);
                 } else {
-                    auto *tmp = OrderFile->read(0);
+                    auto tmp = OrderFile->read(0);
                     pending_id = tmp->first.num;
                 }
             } else {
@@ -78,17 +78,18 @@ namespace sjtu {
             else {
                 orderType *tmp = new orderType;
                 strcpy(tmp->username, uname.c_str());
-                bool if_ok = user_manager->refund_order(this, number, tmp);
-                if (if_ok) {
+                if (user_manager->refund_order(this, number, tmp)) {
                     train_manager->refund_ticket(tmp);
                     auto pendinglist = PendingBpTree->range_query(
                             std::make_pair(hasher(tmp->trainID), 0), std::make_pair(hasher(tmp->trainID), 0x7fffffff));
                     for (int i = 0; i < pendinglist.size(); ++i) {
                         auto ret = OrderFile->read(pendinglist[i].second);
                         if (ret -> first.status != refunded && train_manager->buy_ticket(&(ret -> first))) {
-                            ret -> first.status = success;
-                            OrderFile->save(ret -> first.offset);
-                            PendingBpTree->erase(pendinglist[i].first);
+                            if (ret -> first.status != pending)
+                            {
+                                OrderFile->save(ret -> first.offset);
+                                PendingBpTree->erase(pendinglist[i].first);
+                            }
                             break;
                         }
                     }
@@ -127,7 +128,7 @@ namespace sjtu {
                 else {
                     if (tmp->status == success) {
                         user_manager->add_order(this, tmp);
-                        std::cout << tmp->price << std::endl;
+                        std::cout << tmp->price * tmp->num << std::endl;
                     }
                     else {
                         if (ifpending == false) std::cout << -1 << std::endl;

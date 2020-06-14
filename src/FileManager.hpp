@@ -111,13 +111,12 @@ namespace sjtu
 			if (file.tellp() == offset)
 			{
 				file.write(reinterpret_cast<char *> (&tmp) , sizeof (T));
-				offset += sizeof (T) , file.seekp(0 , std::ios_base::beg);
+				offset_ = offset + sizeof (T) , file.seekp(0 , std::ios_base::beg);
 				file.write(reinterpret_cast<char *> (&tmp) , sizeof (T));
-				file.seekp(- sizeof (T) , std::ios_base::cur) , file.write(reinterpret_cast<char *> (&offset) , sizeof (locType));
+				file.seekp(- sizeof (T) , std::ios_base::cur) , file.write(reinterpret_cast<char *> (&offset_) , sizeof (locType));
 			}
 			else
 			{
-				locType offset_;
 				file.seekg(offset) , file.read(reinterpret_cast<char *> (&offset_) , sizeof (locType));
 				//file.seekp(offset) , file.write(reinterpret_cast<char *> (&tmp) , sizeof (T));
 				file.seekp(0 , std::ios_base::beg) , file.write(reinterpret_cast<char *> (&offset_) , sizeof (locType));

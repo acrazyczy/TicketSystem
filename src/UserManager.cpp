@@ -30,7 +30,12 @@ namespace sjtu
                 }
                 auto now = order_manager->OrderFile->read(tmpticket);
                 now -> first.status = refunded;
+                order -> date[0] = now -> first.date[0] , order -> date[1] = now -> first.date[1];
+                order -> num = now -> first.num , order -> price = now -> first.price;
+                strcpy(order -> trainID , now -> first.trainID);
+                strcpy(order -> station[0] , now -> first.station[0]) , strcpy(order -> station[1] , now -> first.station[1]);
                 order_manager->OrderFile->save(now -> first.offset);
+                return true;
             }
         }
         void UserManager::query_order(OrderManager *order_manager, int argc, std::string *argv) {
@@ -45,7 +50,7 @@ namespace sjtu
                     locType tmpticket = cur->head;
                     while (tmpticket != -1) {
                         auto ret = order_manager->OrderFile->read(tmpticket);
-                        std::cout << '[' << ret -> first.status << "] " << ret->first.trainID << ' ' << ret->first.station[0] << ' ' << ret->first.date[0] << " -> " << ret->first.station[1] << ' ' << ret->first.date[1] << ' ' << ret->first.price << ' ' << ret->first.num << std::endl;
+                        std::cout << '[' << (ret -> first.status ? (ret -> first.status == pending ? "pending" : "refunded") : "success" ) << "] " << ret->first.trainID << ' ' << ret->first.station[0] << ' ' << ret->first.date[0] << " -> " << ret->first.station[1] << ' ' << ret->first.date[1] << ' ' << ret->first.price << ' ' << ret->first.num << std::endl;
                         tmpticket = ret -> second;
                     }
                 }

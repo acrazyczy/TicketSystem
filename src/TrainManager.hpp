@@ -23,9 +23,18 @@ namespace sjtu
 		timeType time[2];
 		int price , seat , duration;
 
+		recordType &operator=(const recordType &other)
+		{
+			if (&other == this) return *this;
+			trainID = other.trainID;
+			for (int t = 0;t < 2;++ t) station[t] = other.station[t] , time[t] = other.time[t];
+			price = other.price , seat = other.seat , duration = other.duration;
+			return *this;
+		}
+
 		friend std::ostream &operator<<(std::ostream &os , const recordType &rec)
 		{
-			os << rec.trainID << " " << rec.station[0] << " " << rec.time[0] << " " << rec.station[1] << " " << rec.time[1] << " " << rec.price << " " << rec.seat;
+			os << rec.trainID << " " << rec.station[0] << " " << rec.time[0] << " -> " << rec.station[1] << " " << rec.time[1] << " " << rec.price << " " << rec.seat;
 		}
 	};
 
@@ -59,25 +68,20 @@ namespace sjtu
 		void display_single(int day_id , const timeType &date , int start , int end)
 		{
 			timeType current_time = startTime;
-			current_time.month = date.month , current_time.day = date.month;
+			current_time.month = date.month , current_time.day = date.day;
 			int price_sum = 0;
 			for (int i = 0;i < end;++ i)
 			{
 				if (i >= start) std::cout << stations[i].stationName << " ";
-				if (!i) {if (i >= start) std::cout << "xx-xx xx:xx -> ";}
-				else
-				{
-					current_time = current_time + stations[i].travelTime;
-					price_sum += stations[i].price;
-					if (i >= start) std::cout << current_time << " -> ";
-					current_time = current_time + stations[i].stopoverTime;
-					if (i >= start) std::cout << current_time << std::endl;
-				}
+				if (i) current_time = current_time + stations[i].travelTime;
+				if (i >= start)
+					if (i) std::cout << current_time << " -> " , price_sum += stations[i].price;
+					else std::cout << "xx-xx xx:xx -> ";
+				if (i) current_time = current_time + stations[i].stopoverTime;
 				if (i >= start)
 				{
-					std::cout << " " << price_sum;
-					if (i == stationNum - 1) std::cout << " x" << std::endl;
-					else std::cout << " " << stations[i + 1].seatNum[day_id] << std::endl; 
+					if (i == stationNum - 1) std::cout << "xx-xx xx:xx " << price_sum << " x" << std::endl;
+					else std::cout << current_time << " " << price_sum << " " << stations[i + 1].seatNum[day_id] << std::endl;
 				}
 			}
 		}
@@ -99,9 +103,8 @@ namespace sjtu
 			current_time.month = 1 , current_time.day = 1;
 			for (int i = 0;i < stationNum;++ i)
 			{
-				if (i) current_time = current_time + stations[i].travelTime;
-				if (stationName == std::string(stations[i].stationName)) break;
-				current_time = current_time + stations[i].stopoverTime;
+				if (i) current_time = current_time + stations[i].travelTime + stations[i].stopoverTime;
+				if (stationName == stations[i].stationName) break;
 			}
 			return 1 - current_time.day;
 		}
@@ -134,6 +137,7 @@ namespace sjtu
 					if (actual_time < record -> time[0]) actual_time = actual_time + 24 * 60;
 					day_id = timeType::dateminus(actual_time , saleDate[0]) + get_Delta_date(record -> station[0]);
 					if (day_id < 0 || day_id > timeType::dateminus(saleDate[1] , saleDate[0])) break;
+					record -> time[0] = actual_time;
 					found = true;
 				}
 			}
@@ -257,7 +261,7 @@ namespace sjtu
 					for (r = l;r < len && travelTimes[r] != '|';++ r);
 					train -> stations[i].travelTime = stoi(travelTimes.substr(l , r - l));
 				}
-				for (int i = 1 , l = 0 , r , len = stopoverTimes.size();i < train -> stationNum - 1;++ i)
+				for (int i = 1 , l = 0 , r , len = stopoverTimes.size();i < train -> stationNum - 1;++ i , l = r + 1)
 				{
 					for (r = l;r < len && stopoverTimes[r] != '|';++ r);
 					train -> stations[i].stopoverTime = stoi(stopoverTimes.substr(l , r - l));
@@ -292,9 +296,11 @@ namespace sjtu
 					for (unsigned int w;bits[0][i];bits[0][i] ^= w)
 					{
 						w = bits[0][i] & (-bits[0][i]);
-						int id = 0;
+						if (!w) continue;
+						int id = -1;
 						for (unsigned int w_ = w;w_;w_ >>= 1) ++ id;
 						trainType *train = TrainFile -> read((i * W + id + 1) * sizeof (DynamicFileManager<trainType>::valueType));
+						assert(train -> offset == (i * W + id + 1) * sizeof (DynamicFileManager<trainType>::valueType));
 						record = new recordType , record -> trainID = train -> trainID;
 						record -> station[0] = station[0] , record -> station[1] = station[1];
 						record -> time[0] = timeType(date);
@@ -415,6 +421,7 @@ namespace sjtu
 			else
 			{
 				trainType *train = TrainFile -> read(ret.first);
+				assert(train -> offset == ret.first);
 				for (int i = 0 , train_id = train -> offset / sizeof (DynamicFileManager<trainType>::valueType) - 1;i < train -> stationNum;++ i)
 				{
 					auto ret = StationBpTree -> find(hasher(train -> stations[i].stationName));
@@ -452,17 +459,21 @@ namespace sjtu
 				else throw invalid_command();
 			auto ret = TrainBpTree -> find(hasher(trainID));
 			if (ret.second == false) std::cout << -1 << std::endl;
-			else if (TrainFile -> read(ret.first) -> is_released == true) std::cout << -1 << std::endl;
 			else
 			{
 				trainType *train = TrainFile -> read(ret.first);
-				for (int i = 0 , train_id = train -> offset / sizeof (DynamicFileManager<trainType>::valueType) - 1;i < train -> stationNum;++ i)
+				assert(train -> offset == ret.first);
+				if (train -> is_released == true) std::cout << -1 << std::endl;
+				else
 				{
-					int id = StationBpTree -> find(hasher(train -> stations[i].stationName)).first;
-					bitset_set(id , train_id , 0);
+					for (int i = 0 , train_id = train -> offset / sizeof (DynamicFileManager<trainType>::valueType) - 1;i < train -> stationNum;++ i)
+					{
+						int id = StationBpTree -> find(hasher(train -> stations[i].stationName)).first;
+						bitset_set(id , train_id , 0);
+					}
+					TrainBpTree -> erase(hasher(trainID)) , TrainFile -> release(ret.first);
+					std::cout << 0 << std::endl;
 				}
-				TrainBpTree -> erase(hasher(trainID)) , TrainFile -> release(ret.first);
-				std::cout << 0 << std::endl;
 			}
 		}
 
