@@ -103,7 +103,10 @@ namespace sjtu {
             } else {
                 file = new DynamicFileManager<node>(str);
                 if (file->is_newfile)
-                    root = -1,depth=0,siz=0;
+		{
+                	file->newspace();
+			root = - 1 , depth = 0 , siz = 0;
+		}
                 else
                     getfromcache();
             }
@@ -115,6 +118,7 @@ namespace sjtu {
 
         ~BplusTree() {
             putintocache();
+            delete file;
         }
 
         std::pair<T, bool> find(const Key &key) {

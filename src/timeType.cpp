@@ -8,7 +8,7 @@ namespace sjtu
 {
         constexpr int timeType::months[13];
 
-        timeType timeType::operator+(const int &time) {
+        timeType timeType::operator+(const int &time) const {
         	timeType ret;
                 ret.minute = minute + time , ret.hour = hour + ret.minute / 60 , ret.minute %= 60;
                 int day_add = ret.hour / 24;ret.hour %= 24;
@@ -26,7 +26,13 @@ namespace sjtu
             tmp2 += rhs.day;
             return (tmp1 - tmp2);
         }
-        bool timeType::operator<(const timeType &other) {
+        int timeType::operator-(const timeType &other) const
+        {
+            return (other.hour < hour || other.hour == hour && other.minute < minute) ?
+                dateminus(*this , other) * 24 * 60 + (hour - other.hour) * 60 + minute - other.minute
+            :   (dateminus(*this , other) - 1) * 24 * 60 + (24 + hour - other.hour) * 60 + minute - other.minute;
+        }
+        bool timeType::operator<(const timeType &other) const {
             int tmp1 = 0, tmp2 = 0;
             for (int i = 1; i <= month; ++i)
                 tmp1 += months[i];

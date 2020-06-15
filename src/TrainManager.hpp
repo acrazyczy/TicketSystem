@@ -41,11 +41,29 @@ namespace sjtu
 	struct cmp_cost
 	{
 		bool operator()(const recordType &lhs , const recordType &rhs) const {return lhs.price < rhs.price || lhs.price == rhs.price && lhs.trainID < rhs.trainID;}
+		bool operator()(const std::pair<recordType , recordType> &lhs , const std::pair<recordType , recordType> &rhs) const
+		{
+			return lhs.first.price + lhs.second.price < rhs.first.price + rhs.second.price ||
+			lhs.first.price + lhs.second.price == rhs.first.price + rhs.second.price &&
+			(
+				lhs.first.trainID < rhs.first.trainID ||
+				lhs.first.trainID == rhs.first.trainID && lhs.first.duration < rhs.first.duration
+			);
+		}
 	};
 
 	struct cmp_time
 	{
 		bool operator()(const recordType &lhs , const recordType &rhs) const {return lhs.duration < rhs.duration || lhs.duration == rhs.duration && lhs.trainID < rhs.trainID;}
+		bool operator()(const std::pair<recordType , recordType> &lhs , const std::pair<recordType , recordType> &rhs) const
+		{
+			return lhs.first.duration + lhs.second.duration + (lhs.second.time[0] - lhs.first.time[1]) < rhs.first.price + rhs.second.price + (rhs.second.time[0] - rhs.first.time[1])||
+			lhs.first.duration + lhs.second.duration + (lhs.second.time[0] - lhs.first.time[1]) == rhs.first.price + rhs.second.price + (rhs.second.time[0] - rhs.first.time[1]) &&
+			(
+				lhs.first.trainID < rhs.first.trainID ||
+				lhs.first.trainID == rhs.first.trainID && lhs.first.duration < rhs.first.duration
+			);
+		}
 	};
 
 	struct stationType
@@ -58,7 +76,7 @@ namespace sjtu
 	struct trainType
 	{
 		char trainID[21];
-		int stationNum;
+		int stationNum , seatNum;
 		stationType stations[101];
 		timeType saleDate[2] , startTime;
 		char type;
@@ -241,10 +259,10 @@ namespace sjtu
 				trainType *train = ret.first;
 				train -> offset = ret.second , train -> is_released = false;
 				strcpy(train -> trainID , trainID.c_str());
-				train -> stationNum = stoi(stationNum);
-				for (int i = 0 , seatNum_ = stoi(seatNum);i < train -> stationNum;++ i)
+				train -> stationNum = stoi(stationNum) , train -> seatNum = stoi(seatNum);
+				for (int i = 0;i < train -> stationNum;++ i)
 					for (int j = 0;j < 92;++ j)
-						train -> stations[i].seatNum[j] = seatNum_;
+						train -> stations[i].seatNum[j] = train -> seatNum;
 				for (int i = 0 , l = 0 , r , len = stations.size();i < train -> stationNum;++ i , l = r + 1)
 				{
 					for (r = l;r < len && stations[r] != '|';++ r);
@@ -300,7 +318,6 @@ namespace sjtu
 						int id = -1;
 						for (unsigned int w_ = w;w_;w_ >>= 1) ++ id;
 						trainType *train = TrainFile -> read((i * W + id + 1) * sizeof (DynamicFileManager<trainType>::valueType));
-						assert(train -> offset == (i * W + id + 1) * sizeof (DynamicFileManager<trainType>::valueType));
 						record = new recordType , record -> trainID = train -> trainID;
 						record -> station[0] = station[0] , record -> station[1] = station[1];
 						record -> time[0] = timeType(date);
@@ -315,6 +332,62 @@ namespace sjtu
 			}
 		}
 
+		template <class Compare>
+		void query_transfer_cmp(std::string station[] , timeType date , Compare comp)
+		{
+			auto ret_s = StationBpTree -> find(hasher(station[0])) , ret_t = StationBpTree -> find(hasher(station[1]));
+			if (ret_s.second == false && ret_t.second == false) std::cout << 0 << std::endl;
+			else
+			{
+				unsigned int bits[3][WS];		
+				bitset_query(ret_s.first , bits[0]) , bitset_query(ret_t.first , bits[1]);
+				std::pair<recordType , recordType> ans;bool found = false;
+				for (int i = 0;i < WS;++ i)
+					for (unsigned int w;bits[0][i];bits[0][i] ^= w)
+					{
+						w = bits[0][i] & (-bits[0][i]);
+						if (!w) continue;
+						int id = -1;
+						for (unsigned int w_ = w;w_;w_ >>= 1) ++ id;
+						locType offset = (i * W + id + 1) * sizeof (DynamicFileManager<trainType>::valueType);
+						trainType *train = TrainFile -> read(offset);
+						int day_id = timeType::dateminus(date , train -> saleDate[0]) + train -> get_Delta_date(station[0]);
+						if (train -> is_released == false || day_id < 0 || day_id > timeType::dateminus(train -> saleDate[1] , train -> saleDate[0])) continue;
+						std::pair<recordType , recordType> cur;
+						cur.first.trainID = train -> trainID , cur.first.station[0] = station[0] , cur.first.time[0] = cur.first.time[1] = timeType(date);
+						cur.first.seat = 100000 , cur.first.price = 0 , cur.first.duration = 0;
+						for (int j = 1 , stationNum = train -> stationNum;j < train -> stationNum;++ j)
+						{
+							train = TrainFile -> read(offset);
+							cur.first.time[1] = cur.first.time[1] + train -> stations[j].travelTime , cur.first.duration += train -> stations[j].travelTime;
+							cur.first.station[1] = train -> stations[j].stationName;
+							cur.first.seat = min(cur.first.seat , train -> stations[j].seatNum[day_id]) , cur.first.price += train -> stations[j].price;
+							bitset_query(StationBpTree -> find(hasher(train -> stations[j].stationName)).first , bits[2]);
+							for (int k = 0;k < WS;++ k)
+							{
+								bits[2][k] &= bits[1][k];
+								for (unsigned int v;bits[2][k];bits[2][k] ^= v)
+								{
+									v = bits[2][k] & (-bits[2][k]);
+									if (!v) continue;
+									int id_ = -1;
+									for (unsigned int v_ = v;v_;v_ >>= 1) ++ id_;
+									trainType *train_ = TrainFile -> read((k * W + id_ + 1) * sizeof (DynamicFileManager<trainType>::valueType));
+									if (train_ -> trainID == cur.first.trainID) continue;
+									cur.second.station[0] = cur.first.station[1] , cur.second.station[1] = station[1];
+									cur.second.trainID = train_ -> trainID , cur.second.time[0] = cur.first.time[1];
+									if (train_ -> getrecord(&cur.second)) if (!found || comp(cur , ans)) ans = cur;
+								}
+							}
+							train = TrainFile -> read(offset);
+							cur.first.time[1] = cur.first.time[1] + train -> stations[j].stopoverTime , cur.first.duration += train -> stations[j].travelTime;
+						}
+					}
+				if (!found) std::cout << 0 << std::endl;
+				else std::cout << ans.first << std::endl << ans.second << std::endl;
+			}
+		}
+
 		void query_transfer(int argc , std::string *argv)
 		{
 			std::string station[2] , date , keyword = "";
@@ -324,90 +397,8 @@ namespace sjtu
 				else if (argv[i] == "-d") date = argv[i + 1];
 				else if (argv[i] == "-p") keyword = argv[i + 1];
 				else throw invalid_command();
-			auto ret_s = StationBpTree -> find(hasher(station[0])) , ret_t = StationBpTree -> find(hasher(station[1]));
-			if (ret_s.second == false || ret_t.second == false) std::cout << 0 << std::endl;
-			else
-			{
-				int station_count = StationBpTree -> size();
-				unsigned int bits[2][WS];
-				bitset_query(ret_s.first , bits[0]);
-				recordType best[4];bool best_filled[4];
-				best_filled[0] = best_filled[1] = best_filled[2] = false;
-				for (int trs = 0;trs < station_count;++ trs)
-					if (trs != ret_s.first && trs != ret_t.first)
-					{
-						std::string trs_station_name = "";
-						bitset_query(trs , bits[1]);
-						recordType *record;
-						for (int i = 0;i < WS;++ i)
-						{
-							bits[0][i] &= bits[1][i];
-							for (unsigned int w;bits[0][i];bits[0][i] ^= w)
-							{
-								w = bits[0][i] & (-bits[0][i]);
-								int id = 0;
-								for (unsigned int w_ = w;w_;w_ >>= 1) ++ id;
-								trainType *train = TrainFile -> read((i * W + id + 1) * sizeof (DynamicFileManager<trainType>::valueType));
-								record = new recordType , record -> trainID = train -> trainID;
-								record -> station[0] = station[0];
-								if (trs_station_name == "")
-								{
-									stationNameType *stname = StationFile -> read(i * sizeof (FileManager<stationNameType>::valueType));
-									trs_station_name = std::string(stname -> name);
-								}
-								record -> station[1] = trs_station_name;
-								record -> time[0] = timeType(date);
-								if (train -> getrecord(record))
-								{
-									if (!best_filled[0] || keyword == "time" && record -> time[1] < best[0].time[1] || keyword != "time" && record -> price < best[0].price)
-									{
-										if (best_filled[0]) best_filled[1] = true , best[1] = best[0];
-										best_filled[0] = true , best[0] = *record;
-									}
-									else if (!best_filled[1] || keyword == "time" && record -> time[1] < best[1].time[1] || keyword != "time" && record -> price < best[1].price)
-										best_filled[1] = true , best[1] = *record;
-								}
-								delete record;
-							}
-						}
-					}
-				bitset_query(ret_t.first , bits[1]);
-				for (int trs = 0;trs < station_count;++ trs)
-					if (trs != ret_s.first && trs != ret_t.first)
-					{
-						std::string trs_station_name = "";
-						bitset_query(trs , bits[1]);
-						recordType *record;
-						for (int i = 0;i < WS;++ i)
-						{
-							bits[0][i] &= bits[1][i];
-							for (unsigned int w;bits[0][i];bits[0][i] ^= w)
-							{
-								w = bits[0][i] & (-bits[0][i]);
-								int id = 0;
-								for (unsigned int w_ = w;w_;w_ >>= 1) ++ id;
-								trainType *train = TrainFile -> read((i * W + id + 1) * sizeof (DynamicFileManager<trainType>::valueType));
-								record = new recordType , record -> trainID = train -> trainID;
-								if (trs_station_name == "")
-								{
-									stationNameType *stname = StationFile -> read(i * sizeof (FileManager<stationNameType>::valueType));
-									trs_station_name = std::string(stname -> name);
-								}
-								record -> station[0] = trs_station_name , record -> station[1] = station[1];
-								int flag;
-								if (best_filled[0] && best[0].trainID != record -> trainID) record -> time[0] = best[0].time[1] , flag = 0;
-								else if (best_filled[1]) record -> time[1] = best[1].time[1] , flag = 1;
-								else flag = -1;
-								if (~ flag && train -> getrecord(record))
-									if (!best_filled[2] || keyword == "time" && record -> time[1] < best[3].time[1] || keyword != "time" && record -> price < best[2].price)
-										best_filled[2] = true , best[2] = best[flag] , best[3] = *record;
-								delete record;
-							}
-						}
-					}
-				if (best_filled[2]) std::cout << best[2] << std::endl << best[3] << std::endl;
-				else std::cout << 0 << std::endl;
-			}
+			if (keyword == "time") query_transfer_cmp(station , date , cmp_cost());
+			else query_transfer_cmp(station , date , cmp_time());
 		}
 
 		void release_train(int argc , std::string *argv)
@@ -421,21 +412,24 @@ namespace sjtu
 			else
 			{
 				trainType *train = TrainFile -> read(ret.first);
-				assert(train -> offset == ret.first);
-				for (int i = 0 , train_id = train -> offset / sizeof (DynamicFileManager<trainType>::valueType) - 1;i < train -> stationNum;++ i)
+				if (train -> is_released == true) std::cout << -1 << std::endl;
+				else
 				{
-					auto ret = StationBpTree -> find(hasher(train -> stations[i].stationName));
-					if (ret.second) bitset_set(ret.first , train_id);
-					else
+					for (int i = 0 , train_id = train -> offset / sizeof (DynamicFileManager<trainType>::valueType) - 1;i < train -> stationNum;++ i)
 					{
-						StationBpTree -> insert(std::make_pair(hasher(train -> stations[i].stationName) , bitset_newblock(train_id)));
-						auto ret_ = StationFile -> newspace();
-						strcpy(ret_.first -> name , train -> stations[i].stationName);
-						StationFile -> save(ret_.second);
+						auto ret = StationBpTree -> find(hasher(train -> stations[i].stationName));
+						if (ret.second) bitset_set(ret.first , train_id);
+						else
+						{
+							StationBpTree -> insert(std::make_pair(hasher(train -> stations[i].stationName) , bitset_newblock(train_id)));
+							auto ret_ = StationFile -> newspace();
+							strcpy(ret_.first -> name , train -> stations[i].stationName);
+							StationFile -> save(ret_.second);
+						}
 					}
+					train -> is_released = true , TrainFile -> save(train -> offset);
+					std::cout << 0 << std::endl;
 				}
-				train -> is_released = true , TrainFile -> save(train -> offset);
-				std::cout << 0 << std::endl;
 			}
 		}
 
@@ -462,7 +456,6 @@ namespace sjtu
 			else
 			{
 				trainType *train = TrainFile -> read(ret.first);
-				assert(train -> offset == ret.first);
 				if (train -> is_released == true) std::cout << -1 << std::endl;
 				else
 				{

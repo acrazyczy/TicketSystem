@@ -7,15 +7,15 @@
 namespace sjtu
 {
         void UserManager::add_order(OrderManager *order_manager, orderType *order) {
-            auto ret = order_manager->OrderFile->newspace();          //std::pair<std::pair<*orderType , locType> , locType>
+            auto ret = order_manager->OrderFile->newspace();          //std::pair<std::pair<orderType , locType>* , locType>
             ret.first -> first = *order;
-            order->offset = ret.second;
+            ret.first->first.offset = ret.second;
             std::pair<locType, bool> tmp = UserBpTree->find(hasher(order->username));
             userType *cur = UserFile->read(tmp.first);
             ret.first -> second = cur->head;
             cur->head = ret.second;
             ++cur->order_count;
-            order_manager->OrderFile->save(order->offset);
+            order_manager->OrderFile->save(ret.first->first.offset);
             UserFile->save(cur->offset);
         }
         bool UserManager::refund_order(OrderManager *order_manager, int n, orderType *order) {

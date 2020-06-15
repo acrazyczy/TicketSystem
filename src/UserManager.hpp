@@ -219,5 +219,3 @@ namespace sjtu {
 
 };
 #endif //TICKET_USERMANAGER_HPP
-
-

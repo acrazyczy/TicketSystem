@@ -46,11 +46,12 @@ namespace sjtu {
             hour = other.hour;
             minute = other.minute;
         }
-        timeType operator+(const int &);
+        timeType operator+(const int &) const;
+        int operator-(const timeType &) const;
 
         static int dateminus(const timeType & , const timeType &);
 
-        bool operator<(const timeType &);
+        bool operator<(const timeType &) const;
 
         friend std::ostream &operator<<(std::ostream &, const timeType &);
     };

@@ -102,7 +102,7 @@ namespace sjtu {
         void buy_ticket(UserManager *user_manager, TrainManager *train_manager, int argc, std::string *argv) {
             std::string uname, utrain, ufrom, uto;timeType uday;
             int unum;
-            bool ifpending;
+            bool ifpending = false;
             for (int i = 0; i < argc; i += 2) {
                 if (argv[i] == "-u") uname = argv[i + 1];
                 else if (argv[i] == "-i") utrain = argv[i + 1];
