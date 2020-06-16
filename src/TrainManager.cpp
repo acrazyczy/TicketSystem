@@ -52,6 +52,7 @@ namespace sjtu
 					order -> status = success;
 				}
 				else order -> status = pending;
+				TrainFile -> save(train -> offset);
 				return 1;
 			}
 		}
@@ -69,5 +70,6 @@ namespace sjtu
 			if (std::string(train -> stations[i].stationName) == std::string(order -> station[1])) break;
 			if (std::string(train -> stations[i].stationName) == std::string(order -> station[0])) flag = true;
 		}
+		TrainFile -> save(train -> offset);
 	}
 }

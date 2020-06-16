@@ -32,7 +32,7 @@ namespace sjtu
                 if (now -> first.status == refunded) return false;
                 now -> first.status = refunded;
                 order -> date[0] = now -> first.date[0] , order -> date[1] = now -> first.date[1];
-                order -> num = now -> first.num , order -> price = now -> first.price;
+                order -> num = now -> first.num , order -> price = now -> first.price , order -> offset = now -> first.offset;
                 strcpy(order -> trainID , now -> first.trainID);
                 strcpy(order -> station[0] , now -> first.station[0]) , strcpy(order -> station[1] , now -> first.station[1]);
                 order_manager->OrderFile->save(now -> first.offset);

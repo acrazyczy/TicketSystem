@@ -127,10 +127,11 @@ namespace sjtu
 			return 1 - current_time.day;
 		}
 
-		bool getrecord(recordType *record)
+		bool getrecord(recordType *record , bool flag = false)
 		{
 			if (!is_released) return false;
 			timeType actual_time(startTime);
+			actual_time.month = saleDate[0].month , actual_time.day = saleDate[0].day;
 			bool found = false;
 			for (int i = 0 , day_id;i < stationNum;++ i)
 			{
@@ -151,8 +152,8 @@ namespace sjtu
 				if (stations[i].stationName == record -> station[0])
 				{
 					record -> price = 0 , record -> duration = 0 , record -> seat = 100000;
-					actual_time.month = record -> time[0].month , actual_time.day = record -> time[0].day;
-					if (actual_time < record -> time[0]) actual_time = actual_time + 24 * 60;
+					if (!flag || actual_time < record -> time[0]) actual_time.month = record -> time[0].month , actual_time.day = record -> time[0].day;
+					if (flag && actual_time < record -> time[0]) actual_time = actual_time + 24 * 60;
 					day_id = timeType::dateminus(actual_time , saleDate[0]) + get_Delta_date(record -> station[0]);
 					if (day_id < 0 || day_id > timeType::dateminus(saleDate[1] , saleDate[0])) break;
 					record -> time[0] = actual_time;
@@ -354,33 +355,44 @@ namespace sjtu
 						int day_id = timeType::dateminus(date , train -> saleDate[0]) + train -> get_Delta_date(station[0]);
 						if (train -> is_released == false || day_id < 0 || day_id > timeType::dateminus(train -> saleDate[1] , train -> saleDate[0])) continue;
 						std::pair<recordType , recordType> cur;
-						cur.first.trainID = train -> trainID , cur.first.station[0] = station[0] , cur.first.time[0] = cur.first.time[1] = timeType(date);
+						cur.first.trainID = train -> trainID , cur.first.station[0] = station[0] , cur.first.time[0] = cur.first.time[1] = train -> startTime;
 						cur.first.seat = 100000 , cur.first.price = 0 , cur.first.duration = 0;
-						for (int j = 1 , stationNum = train -> stationNum;j < train -> stationNum;++ j)
+						bool flag = false;
+						for (int j = 0 , stationNum = train -> stationNum;j < train -> stationNum;++ j)
 						{
 							train = TrainFile -> read(offset);
-							cur.first.time[1] = cur.first.time[1] + train -> stations[j].travelTime , cur.first.duration += train -> stations[j].travelTime;
-							cur.first.station[1] = train -> stations[j].stationName;
-							cur.first.seat = min(cur.first.seat , train -> stations[j].seatNum[day_id]) , cur.first.price += train -> stations[j].price;
-							bitset_query(StationBpTree -> find(hasher(train -> stations[j].stationName)).first , bits[2]);
-							for (int k = 0;k < WS;++ k)
+							if (j) cur.first.time[1] = cur.first.time[1] + train -> stations[j].travelTime , cur.first.duration += flag * (train -> stations[j].travelTime);
+							if (flag)
 							{
-								bits[2][k] &= bits[1][k];
-								for (unsigned int v;bits[2][k];bits[2][k] ^= v)
+								cur.first.station[1] = train -> stations[j].stationName;
+								cur.first.seat = min(cur.first.seat , train -> stations[j].seatNum[day_id]) , cur.first.price += train -> stations[j].price;
+								bitset_query(StationBpTree -> find(hasher(train -> stations[j].stationName)).first , bits[2]);
+								for (int k = 0;k < WS;++ k)
 								{
-									v = bits[2][k] & (-bits[2][k]);
-									if (!v) continue;
-									int id_ = -1;
-									for (unsigned int v_ = v;v_;v_ >>= 1) ++ id_;
-									trainType *train_ = TrainFile -> read((k * W + id_ + 1) * sizeof (DynamicFileManager<trainType>::valueType));
-									if (train_ -> trainID == cur.first.trainID) continue;
-									cur.second.station[0] = cur.first.station[1] , cur.second.station[1] = station[1];
-									cur.second.trainID = train_ -> trainID , cur.second.time[0] = cur.first.time[1];
-									if (train_ -> getrecord(&cur.second)) if (!found || comp(cur , ans)) ans = cur , found = true;
+									bits[2][k] &= bits[1][k];
+									for (unsigned int v;bits[2][k];bits[2][k] ^= v)
+									{
+										v = bits[2][k] & (-bits[2][k]);
+										if (!v) continue;
+										int id_ = -1;
+										for (unsigned int v_ = v;v_;v_ >>= 1) ++ id_;
+										trainType *train_ = TrainFile -> read((k * W + id_ + 1) * sizeof (DynamicFileManager<trainType>::valueType));
+										if (train_ -> trainID == cur.first.trainID) continue;
+										cur.second.station[0] = cur.first.station[1] , cur.second.station[1] = station[1];
+										cur.second.trainID = train_ -> trainID , cur.second.time[0] = cur.first.time[1];
+										if (train_ -> getrecord(&cur.second , true)) if (!found || comp(cur , ans)) ans = cur , found = true;
+									}
 								}
 							}
 							train = TrainFile -> read(offset);
-							cur.first.time[1] = cur.first.time[1] + train -> stations[j].stopoverTime , cur.first.duration += train -> stations[j].travelTime;
+							if (j) cur.first.time[1] = cur.first.time[1] + train -> stations[j].stopoverTime , cur.first.duration += flag * (train -> stations[j].travelTime);
+							if (train -> stations[j].stationName == station[0])
+							{
+								flag = true;
+								cur.first.time[1].month = cur.first.time[0].month = date.month;
+								cur.first.time[0].hour = cur.first.time[1].hour , cur.first.time[0].minute = cur.first.time[1].minute;
+								cur.first.time[1].day = cur.first.time[0].day = date.day;
+							}
 						}
 					}
 				if (!found) std::cout << 0 << std::endl;
