@@ -11,9 +11,14 @@
 
 namespace sjtu
 {
-	const int max_train_num = 16384;
-	const int W = 32;
-	const int WS = max_train_num / W;
+    	static const int StationBpTree_cache_size = 256;
+    	static const int TrainBpTree_cache_size = 256;
+    	static const int StationFile_cache_size = 32;
+    	static const int TrainFile_cache_size = 16;
+
+	static const int max_train_num = 16384;
+	static const int W = 32;
+	static const int WS = max_train_num / W;
 
 	class orderType;
 
@@ -217,17 +222,17 @@ namespace sjtu
 		{
 			if (is_reset)
 			{
-				StationBpTree -> init("StationBpTree.dat" , true);
-				TrainBpTree -> init("TrainBpTree.dat" , true);
-				TrainFile -> init("TrainFile.dat" , true);
-				StationFile -> init("StationFile.dat" , true);
+				StationBpTree -> init("StationBpTree.dat" , StationBpTree_cache_size , true);
+				TrainBpTree -> init("TrainBpTree.dat" , TrainBpTree_cache_size , true);
+				TrainFile -> init("TrainFile.dat" , TrainFile_cache_size , true);
+				StationFile -> init("StationFile.dat" , StationFile_cache_size , true);
 			}
 			else
 			{
-				StationBpTree = new BplusTree<StringHasher::hashType , unsigned int> ("StationBpTree.dat");
-				TrainBpTree = new BplusTree<StringHasher::hashType , locType> ("TrainBpTree.dat");
-				TrainFile = new DynamicFileManager<trainType> ("TrainFile.dat");
-				StationFile = new FileManager<stationNameType> ("StationFile.dat");
+				StationBpTree = new BplusTree<StringHasher::hashType , unsigned int> ("StationBpTree.dat" , StationBpTree_cache_size);
+				TrainBpTree = new BplusTree<StringHasher::hashType , locType> ("TrainBpTree.dat" , TrainBpTree_cache_size);
+				TrainFile = new DynamicFileManager<trainType> ("TrainFile.dat" , TrainFile_cache_size);
+				StationFile = new FileManager<stationNameType> ("StationFile.dat" , StationFile_cache_size);
 			}
 			if (TrainFile -> is_newfile)
 			{

@@ -95,13 +95,13 @@ namespace sjtu {
             root=x->nxt,depth=x->dep_and_siz[0],siz=x->dep_and_siz[1];
         }
 
-        void init(std::string str , bool is_reset = false)
+        void init(std::string str , unsigned int cache_size , bool is_reset = false)
         {
             if (is_reset) {
-                file->init(str, true);
+                file->init(str, cache_size , true);
                 root = -1,depth = 0,siz=0;
             } else {
-                file = new DynamicFileManager<node>(str);
+                file = new DynamicFileManager<node>(str , cache_size);
                 if (file->is_newfile)
 		{
                 	file->newspace();
@@ -112,8 +112,8 @@ namespace sjtu {
             }
         }
 
-        BplusTree(std::string str) {
-            init(str);
+        BplusTree(std::string str , unsigned int cache_size) {
+            init(str , cache_size);
         }
 
         ~BplusTree() {

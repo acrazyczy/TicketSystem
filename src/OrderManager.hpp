@@ -15,6 +15,9 @@
 
 namespace sjtu {
 
+    static const int PendingBpTree_cache_size = 256;
+    static const int OrderFile_cache_size = 64;
+
     enum orderstatus {
         success , pending, refunded
     };
@@ -42,8 +45,8 @@ namespace sjtu {
 
         void init(bool obj = false) {
             if (obj == false) {
-                OrderFile = new FileManager<std::pair<orderType, locType>>("OrderFile.dat");
-                PendingBpTree = new BplusTree<std::pair<StringHasher::hashType, int>, locType>("PendingBptree.dat");
+                OrderFile = new FileManager<std::pair<orderType, locType>>("OrderFile.dat" , OrderFile_cache_size);
+                PendingBpTree = new BplusTree<std::pair<StringHasher::hashType, int>, locType>("PendingBpTree.dat" , PendingBpTree_cache_size);
                 if (OrderFile->is_newfile) {
                     auto ret = OrderFile -> newspace();
                     ret.first -> first.offset = ret.second;
@@ -54,8 +57,8 @@ namespace sjtu {
                     pending_id = tmp->first.num;
                 }
             } else {
-                OrderFile->init("OrderFile.dat", true);
-                PendingBpTree->init("PendingBptree.dat", true);
+                OrderFile->init("OrderFile.dat", OrderFile_cache_size , true);
+                PendingBpTree->init("PendingBpTree.dat", PendingBpTree_cache_size , true);
                     auto ret = OrderFile -> newspace();
                     ret.first -> first.offset = ret.second;
                     ret.first -> first.num = 0;

@@ -20,7 +20,7 @@ namespace sjtu
 		bool is_newfile;
 		FileManager_Base(){}
 
-		virtual void init(std::string , bool = false) = 0;
+		virtual void init(std::string , unsigned int , bool = false) = 0;
 		virtual std::pair<T * , locType> newspace() = 0;
 		virtual T *read(const locType &) = 0;
 		virtual void save(const locType &) = 0;
@@ -39,12 +39,12 @@ namespace sjtu
 
 		using FileManager_Base<T>::is_newfile;
 
-		FileManager(std::string filepath) {cache = nullptr , init(filepath);}
+		FileManager(std::string filepath , unsigned int cache_size) {cache = nullptr , init(filepath , cache_size);}
 
-		virtual void init(std::string filepath , bool is_reset = false) override
+		virtual void init(std::string filepath , unsigned int cache_size , bool is_reset = false) override
 		{
 			if (cache) delete cache;
-			cache = new LRUCache<T>(128 , file);
+			cache = new LRUCache<T>(cache_size , file);
 			std::ifstream infile(filepath , std::ios_base::in);
 			if (!infile.is_open() || is_reset)
 			{
@@ -82,12 +82,12 @@ namespace sjtu
 
 		using FileManager_Base<T>::is_newfile;
 
-		DynamicFileManager(std::string filepath) {cache = nullptr , init(filepath);}
+		DynamicFileManager(std::string filepath , unsigned int cache_size) {cache = nullptr , init(filepath , cache_size);}
 
-		virtual void init(std::string filepath , bool is_reset = false) override
+		virtual void init(std::string filepath , unsigned int cache_size , bool is_reset = false) override
 		{
 			if (cache) delete cache;
-			cache = new LRUCache<T>(128 , file);
+			cache = new LRUCache<T>(cache_size , file);
 			std::ifstream infile(filepath , std::ios_base::in);
 			if (!infile.is_open() || is_reset)
 			{

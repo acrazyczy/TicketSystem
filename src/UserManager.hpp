@@ -14,6 +14,9 @@
 
 namespace sjtu {
 
+    static const int UserBpTree_cache_size = 256;
+    static const int UserFile_cache_size = 32;
+
     class orderType;
     class OrderManager;
 
@@ -42,11 +45,11 @@ namespace sjtu {
 
         void init(bool obj = false) {
             if (obj == false) {
-                UserBpTree = new BplusTree<StringHasher::hashType, locType>(std::string("UserBpTree.dat"));
-                UserFile = new FileManager<userType>(std::string("UserFile.dat"));
+                UserBpTree = new BplusTree<StringHasher::hashType, locType>(std::string("UserBpTree.dat") , UserBpTree_cache_size);
+                UserFile = new FileManager<userType>(std::string("UserFile.dat") , UserFile_cache_size);
             } else {
-                UserBpTree->init(std::string("UserBpTree.dat"), true);
-                UserFile->init(std::string("UserFile.dat"), true);
+                UserBpTree->init(std::string("UserBpTree.dat") , UserBpTree_cache_size , true);
+                UserFile->init(std::string("UserFile.dat") , UserFile_cache_size , true);
             }
             if (UserFile -> is_newfile)
             {
