@@ -9,9 +9,9 @@
 
 int main()
 {
-	/*std::ifstream in("data/10.in");
+	/*std::ifstream in("data/1.in");
 	std::cin.rdbuf(in.rdbuf());
-	std::ofstream out("10.out");
+	std::ofstream out("1.out");
 	std::cout.rdbuf(out.rdbuf());*/
     std::string argv[100];
     int argc = 0, l, r;
