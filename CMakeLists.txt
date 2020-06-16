@@ -17,4 +17,4 @@ set(src_dir
         src/map.hpp
         src/TypesAndHeaders.hpp
         src/TrainManager.hpp src/TicketSystem.cpp src/StringHasher.hpp src/UserManager.cpp src/TrainManager.cpp src/timeType.cpp)
-add_executable(TicketSystem ${src_dir})
+add_executable(code ${src_dir})
