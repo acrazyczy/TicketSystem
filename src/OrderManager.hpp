@@ -84,14 +84,12 @@ namespace sjtu {
                             std::make_pair(hasher(tmp->trainID), 0), std::make_pair(hasher(tmp->trainID), 0x7fffffff));
                     for (int i = 0; i < pendinglist.size(); ++i) {
                         auto ret = OrderFile->read(pendinglist[i].second);
-                        if (ret -> first.status != refunded && train_manager->buy_ticket(&(ret -> first))) {
+                        if (ret -> first.status != refunded && train_manager->buy_ticket(&(ret -> first)))
                             if (ret -> first.status != pending)
                             {
                                 OrderFile->save(ret -> first.offset);
                                 PendingBpTree->erase(pendinglist[i].first);
                             }
-                            break;
-                        }
                     }
                     std::cout << 0 << std::endl;
                 } else std::cout << -1 << std::endl;
@@ -135,7 +133,7 @@ namespace sjtu {
                         else {
                             tmp->status = pending;
                             user_manager->add_order(this, tmp);
-                            PendingBpTree->insert(std::make_pair(std::make_pair(hasher(tmp->trainID), pending_id), tmp->offset));
+                            PendingBpTree->insert(std::make_pair(std::make_pair(hasher(tmp->trainID), ++ pending_id), tmp->offset));
                             std::cout << "queue" << std::endl;
                         }
                     }

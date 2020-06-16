@@ -83,7 +83,7 @@ namespace sjtu
 				{
 					CacheNode *tmp = tail;
 					if (tail = tail -> prec) tail -> succ = nullptr;
-					if (!tail) head = nullptr;
+					else  head = nullptr;
 					delete tmp;
 				}
 				if (head == nullptr) head = tail = node;

@@ -9,7 +9,7 @@ namespace sjtu
         void UserManager::add_order(OrderManager *order_manager, orderType *order) {
             auto ret = order_manager->OrderFile->newspace();          //std::pair<std::pair<orderType , locType>* , locType>
             ret.first -> first = *order;
-            ret.first->first.offset = ret.second;
+            ret.first->first.offset = order -> offset = ret.second;
             std::pair<locType, bool> tmp = UserBpTree->find(hasher(order->username));
             userType *cur = UserFile->read(tmp.first);
             ret.first -> second = cur->head;
@@ -29,6 +29,7 @@ namespace sjtu
                     tmpticket = ret -> second;
                 }
                 auto now = order_manager->OrderFile->read(tmpticket);
+                if (now -> first.status == refunded) return false;
                 now -> first.status = refunded;
                 order -> date[0] = now -> first.date[0] , order -> date[1] = now -> first.date[1];
                 order -> num = now -> first.num , order -> price = now -> first.price;

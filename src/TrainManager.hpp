@@ -336,7 +336,7 @@ namespace sjtu
 		void query_transfer_cmp(std::string station[] , timeType date , Compare comp)
 		{
 			auto ret_s = StationBpTree -> find(hasher(station[0])) , ret_t = StationBpTree -> find(hasher(station[1]));
-			if (ret_s.second == false && ret_t.second == false) std::cout << 0 << std::endl;
+			if (ret_s.second == false || ret_t.second == false) std::cout << 0 << std::endl;
 			else
 			{
 				unsigned int bits[3][WS];		
@@ -376,7 +376,7 @@ namespace sjtu
 									if (train_ -> trainID == cur.first.trainID) continue;
 									cur.second.station[0] = cur.first.station[1] , cur.second.station[1] = station[1];
 									cur.second.trainID = train_ -> trainID , cur.second.time[0] = cur.first.time[1];
-									if (train_ -> getrecord(&cur.second)) if (!found || comp(cur , ans)) ans = cur;
+									if (train_ -> getrecord(&cur.second)) if (!found || comp(cur , ans)) ans = cur , found = true;
 								}
 							}
 							train = TrainFile -> read(offset);
