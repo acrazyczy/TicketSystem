@@ -44,7 +44,7 @@ namespace sjtu
 		virtual void init(std::string filepath , bool is_reset = false) override
 		{
 			if (cache) delete cache;
-			cache = new LRUCache<T>(1024 , file);
+			cache = new LRUCache<T>(512 , file);
 			std::ifstream infile(filepath , std::ios_base::in);
 			if (!infile.is_open() || is_reset)
 			{
@@ -87,7 +87,7 @@ namespace sjtu
 		virtual void init(std::string filepath , bool is_reset = false) override
 		{
 			if (cache) delete cache;
-			cache = new LRUCache<T>(1024 , file);
+			cache = new LRUCache<T>(512 , file);
 			std::ifstream infile(filepath , std::ios_base::in);
 			if (!infile.is_open() || is_reset)
 			{
