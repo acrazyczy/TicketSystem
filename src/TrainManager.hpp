@@ -62,8 +62,8 @@ namespace sjtu
 		bool operator()(const recordType &lhs , const recordType &rhs) const {return lhs.duration < rhs.duration || lhs.duration == rhs.duration && lhs.trainID < rhs.trainID;}
 		bool operator()(const std::pair<recordType , recordType> &lhs , const std::pair<recordType , recordType> &rhs) const
 		{
-			return lhs.first.duration + lhs.second.duration + (lhs.second.time[0] - lhs.first.time[1]) < rhs.first.price + rhs.second.price + (rhs.second.time[0] - rhs.first.time[1])||
-			lhs.first.duration + lhs.second.duration + (lhs.second.time[0] - lhs.first.time[1]) == rhs.first.price + rhs.second.price + (rhs.second.time[0] - rhs.first.time[1]) &&
+			return lhs.first.duration + lhs.second.duration + (lhs.second.time[0] - lhs.first.time[1]) < rhs.first.duration + rhs.second.duration + (rhs.second.time[0] - rhs.first.time[1])||
+			lhs.first.duration + lhs.second.duration + (lhs.second.time[0] - lhs.first.time[1]) == rhs.first.duration + rhs.second.duration + (rhs.second.time[0] - rhs.first.time[1]) &&
 			(
 				lhs.first.trainID < rhs.first.trainID ||
 				lhs.first.trainID == rhs.first.trainID && lhs.first.duration < rhs.first.duration
@@ -390,7 +390,7 @@ namespace sjtu
 								}
 							}
 							train = TrainFile -> read(offset);
-							if (j) cur.first.time[1] = cur.first.time[1] + train -> stations[j].stopoverTime , cur.first.duration += flag * (train -> stations[j].travelTime);
+							if (j) cur.first.time[1] = cur.first.time[1] + train -> stations[j].stopoverTime , cur.first.duration += flag * (train -> stations[j].stopoverTime);
 							if (train -> stations[j].stationName == station[0])
 							{
 								flag = true;
@@ -414,8 +414,8 @@ namespace sjtu
 				else if (argv[i] == "-d") date = argv[i + 1];
 				else if (argv[i] == "-p") keyword = argv[i + 1];
 				else throw invalid_command();
-			if (keyword == "time") query_transfer_cmp(station , date , cmp_cost());
-			else query_transfer_cmp(station , date , cmp_time());
+			if (keyword == "time") query_transfer_cmp(station , date , cmp_time());
+			else query_transfer_cmp(station , date , cmp_cost());
 		}
 
 		void release_train(int argc , std::string *argv)
