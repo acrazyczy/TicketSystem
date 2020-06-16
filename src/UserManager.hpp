@@ -95,20 +95,25 @@ namespace sjtu {
                     else if (argv[i] == "-g") upri = stoi(argv[i + 1]);
                 }
                 std::pair<locType, bool> tmp = UserBpTree->find(hasher(current));
-                userType *curuser = UserFile->read(tmp.first);
-                if (curuser->privilege > upri && UserBpTree -> find(hasher(usname)).second == false) {
-                    auto ret = UserFile -> newspace();
-                    userType *user = ret.first;
-                    user->offset = ret.second;
-                    strcpy(user->username, usname.c_str());
-                    strcpy(user->password, uspass.c_str());
-                    strcpy(user->name, uname.c_str());
-                    strcpy(user->mailAddr, umail.c_str());
-                    user->privilege = upri;
-                    user->is_online = 0;
-                    UserFile->save(user->offset);
-                    UserBpTree->insert(BplusTree<StringHasher::hashType , locType>::value_type(hasher(user->username), user->offset));
-                    std::cout << 0 << std::endl;
+                if (tmp.second)
+		{
+			userType *curuser = UserFile->read(tmp.first);
+			if (curuser -> is_online == online_flag && curuser->privilege > upri && UserBpTree -> find(hasher(usname)).second == false)
+			{
+				auto ret = UserFile -> newspace();
+				userType *user = ret . first;
+				user -> offset = ret . second;
+				strcpy(user -> username , usname . c_str());
+				strcpy(user -> password , uspass . c_str());
+				strcpy(user -> name , uname . c_str());
+				strcpy(user -> mailAddr , umail . c_str());
+				user -> privilege = upri;
+				user -> is_online = 0;
+				UserFile -> save(user -> offset);
+				UserBpTree -> insert(BplusTree<StringHasher::hashType , locType>::value_type(
+					hasher(user -> username) , user -> offset));
+				std::cout << 0 << std::endl;
+			}else std::cout << -1 << std::endl;
                 } else std::cout << -1 << std::endl;
             }
         }

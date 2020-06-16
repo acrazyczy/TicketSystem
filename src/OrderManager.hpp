@@ -79,17 +79,22 @@ namespace sjtu {
                 orderType *tmp = new orderType;
                 strcpy(tmp->username, uname.c_str());
                 if (user_manager->refund_order(this, number, tmp)) {
-                    train_manager->refund_ticket(tmp);
-                    auto pendinglist = PendingBpTree->range_query(
-                            std::make_pair(hasher(tmp->trainID), 0), std::make_pair(hasher(tmp->trainID), 0x7fffffff));
-                    for (int i = 0; i < pendinglist.size(); ++i) {
-                        auto ret = OrderFile->read(pendinglist[i].second);
-                        if (ret -> first.status != refunded && train_manager->buy_ticket(&(ret -> first)))
-                            if (ret -> first.status != pending)
-                            {
-                                OrderFile->save(ret -> first.offset);
-                                PendingBpTree->erase(pendinglist[i].first);
-                            }
+                    if (tmp -> status == success)
+                    {
+                        train_manager -> refund_ticket(tmp);
+                        auto pendinglist = PendingBpTree -> range_query(
+                                std::make_pair(hasher(tmp -> trainID) , 0) ,
+                                std::make_pair(hasher(tmp -> trainID) , 0x7fffffff));
+                        for (int i = 0 ; i < pendinglist . size() ; ++ i)
+                        {
+                            auto ret = OrderFile -> read(pendinglist[i] . second);
+                            if (ret -> first . status != refunded && train_manager -> buy_ticket(&(ret -> first)))
+                                if (ret -> first . status != pending)
+                                {
+                                    OrderFile -> save(ret -> first . offset);
+                                    PendingBpTree -> erase(pendinglist[i] . first);
+                                }
+                        }
                     }
                     std::cout << 0 << std::endl;
                 } else std::cout << -1 << std::endl;

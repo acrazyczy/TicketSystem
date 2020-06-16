@@ -30,7 +30,7 @@ namespace sjtu
                 }
                 auto now = order_manager->OrderFile->read(tmpticket);
                 if (now -> first.status == refunded) return false;
-                now -> first.status = refunded;
+                order -> status = now -> first.status , now -> first.status = refunded;
                 order -> date[0] = now -> first.date[0] , order -> date[1] = now -> first.date[1];
                 order -> num = now -> first.num , order -> price = now -> first.price , order -> offset = now -> first.offset;
                 strcpy(order -> trainID , now -> first.trainID);

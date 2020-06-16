@@ -132,7 +132,7 @@ namespace sjtu
 			if (!is_released) return false;
 			timeType actual_time(startTime);
 			actual_time.month = saleDate[0].month , actual_time.day = saleDate[0].day;
-			bool found = false;
+			bool found = false , end_flag = false;
 			for (int i = 0 , day_id;i < stationNum;++ i)
 			{
 				if (i) actual_time = actual_time + stations[i].travelTime;
@@ -142,7 +142,7 @@ namespace sjtu
 					record -> price += stations[i].price , record -> duration += stations[i].travelTime;
 					if (stations[i].stationName == record -> station[1])
 					{
-						record -> time[1] = actual_time;
+						record -> time[1] = actual_time , end_flag = true;
 						break;
 					}
 					record -> duration += stations[i].stopoverTime;
@@ -160,7 +160,7 @@ namespace sjtu
 					found = true;
 				}
 			}
-			if (!found) return false;
+			if (!found || !end_flag) return false;
 			return true;
 		}
 	};
