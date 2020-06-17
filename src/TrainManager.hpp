@@ -49,11 +49,7 @@ namespace sjtu
 		bool operator()(const std::pair<recordType , recordType> &lhs , const std::pair<recordType , recordType> &rhs) const
 		{
 			return lhs.first.price + lhs.second.price < rhs.first.price + rhs.second.price ||
-			lhs.first.price + lhs.second.price == rhs.first.price + rhs.second.price &&
-			(
-				lhs.first.trainID < rhs.first.trainID ||
-				lhs.first.trainID == rhs.first.trainID && lhs.first.duration < rhs.first.duration
-			);
+			lhs.first.price + lhs.second.price == rhs.first.price + rhs.second.price && lhs.first.duration < rhs.first.duration;
 		}
 	};
 
@@ -63,11 +59,7 @@ namespace sjtu
 		bool operator()(const std::pair<recordType , recordType> &lhs , const std::pair<recordType , recordType> &rhs) const
 		{
 			return lhs.first.duration + lhs.second.duration + (lhs.second.time[0] - lhs.first.time[1]) < rhs.first.duration + rhs.second.duration + (rhs.second.time[0] - rhs.first.time[1])||
-			lhs.first.duration + lhs.second.duration + (lhs.second.time[0] - lhs.first.time[1]) == rhs.first.duration + rhs.second.duration + (rhs.second.time[0] - rhs.first.time[1]) &&
-			(
-				lhs.first.trainID < rhs.first.trainID ||
-				lhs.first.trainID == rhs.first.trainID && lhs.first.duration < rhs.first.duration
-			);
+			lhs.first.duration + lhs.second.duration + (lhs.second.time[0] - lhs.first.time[1]) == rhs.first.duration + rhs.second.duration + (rhs.second.time[0] - rhs.first.time[1]) && lhs.first.duration < rhs.first.duration;
 		}
 	};
 
