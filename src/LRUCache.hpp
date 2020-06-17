@@ -87,7 +87,7 @@ namespace sjtu
 					delete tmp;
 				}
 				if (head == nullptr) head = tail = node;
-				else (node -> prec = tail) -> succ = node , tail = node;
+				else (node -> succ = head) -> prec = node , head = node;
 			}
 			else
 			{
